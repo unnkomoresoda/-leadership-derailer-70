@@ -1,5 +1,7 @@
 # Leadership Derailer 70
 
+[診断サイトを開く](https://unnkomoresoda.github.io/-leadership-derailer-70/)
+
 70問でプレッシャー下の行動傾向とチームへの作用を振り返る、日本語の独自セルフスクリーニングです。
 
 既存の `leadership_derailer_70_v2_1_fixed.html` の設問・採点式・結果説明を継承しています。Hogan Assessmentsの公式診断ではなく、標準化された心理検査の精度を示すものではありません。
