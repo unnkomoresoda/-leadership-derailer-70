@@ -106,3 +106,36 @@ test('answers still work when browser storage is unavailable', () => {
   fill(app,3);
   assert.equal(app.run('calc().multiplier'),50);
 });
+test('full shuffle is a permutation and persists across resume and review', () => {
+  const app=load();
+  const order=JSON.parse(JSON.stringify(app.run('ensureQuestionOrder()')));
+  assert.deepEqual([...order].sort((a,b)=>a-b),Array.from({length:70},(_,i)=>i));
+  assert.notDeepEqual(order,Array.from({length:70},(_,i)=>i));
+  assert.equal(app.run('JSON.stringify(ensureQuestionOrder())'),JSON.stringify(order));
+  const resumed=load(Object.fromEntries(app.storage));
+  assert.equal(resumed.run('JSON.stringify(ensureQuestionOrder())'),JSON.stringify(order));
+  app.run('resetQuiz()');
+  assert.equal(app.storage.has('derailer70Order'),false);
+  assert.equal(app.run('questionOrder'),null);
+});
+test('malformed saved orders are replaced and question IDs survive shuffled display', () => {
+  const app=load({'derailer70Order':'[0,0,1]'});
+  app.run('renderQuestions()');
+  const cards=app.document.getElementById('questions').children;
+  assert.equal(cards.length,70);
+  assert.equal(new Set(cards.map(c=>c.id)).size,70);
+  assert.ok(cards.every((c,pos)=>c.innerHTML.includes(`<div class="qnum">${pos+1}</div>`)&&!c.innerHTML.includes('section-banner')));
+  const id=Number(cards[0].id.replace('question-card-',''));
+  assert.ok(cards[0].innerHTML.includes(`name="q${id}"`));
+  app.run(`saveAnswer(${id},5)`);
+  assert.equal(app.run(`answers[${id}]`),5);
+});
+test('order changes do not alter scoring and neutral results acknowledge ties', () => {
+  const app=load();fill(app,3);
+  const before=JSON.stringify(app.run('calc()'));
+  app.run('questionOrder=shuffledOrder();renderResults(calc())');
+  assert.equal(JSON.stringify(app.run('calc()')),before);
+  assert.match(app.document.getElementById('summaryCopy').textContent,/すべて同じ得点/);
+  assert.match(app.document.getElementById('types').innerHTML,/類似度/);
+  assert.doesNotMatch(app.document.getElementById('types').innerHTML,/% fit/);
+});
