@@ -138,4 +138,5 @@ test('order changes do not alter scoring and neutral results acknowledge ties', 
   assert.match(app.document.getElementById('summaryCopy').textContent,/すべて同じ得点/);
   assert.match(app.document.getElementById('types').innerHTML,/類似度/);
   assert.doesNotMatch(app.document.getElementById('types').innerHTML,/% fit/);
+  assert.match(app.document.getElementById('development').innerHTML,/11項目が同点/);
 });
