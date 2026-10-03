@@ -8,30 +8,34 @@ const path = require('node:path');
 function load(initialStorage = {}, blockedStorage = false) {
   const storage = new Map(Object.entries(initialStorage));
   const elements = new Map();
+  const downloadBlobs = [];
   function element() {
     const classes = new Set();
     return {
-      value: '', textContent: '', innerHTML: '', style: {}, children: [],
+      value: '', textContent: '', style: {}, children: [],
+      get innerHTML() { return this.html ?? ''; },
+      set innerHTML(value) { this.html = value; this.children = []; },
       classList: { add: x => classes.add(x), remove: x => classes.delete(x), contains: x => classes.has(x) },
       addEventListener() {}, setAttribute() {}, removeAttribute() {},
-      focus() {}, scrollIntoView() {}, insertAdjacentHTML() {},
+      focus() {}, scrollIntoView() {}, insertAdjacentHTML() {}, click() {}, remove() {},
       appendChild(child) { this.children.push(child); }
     };
   }
   const document = {
     getElementById(id) { if (!elements.has(id)) elements.set(id, element()); return elements.get(id); },
     querySelectorAll() { return this.getElementById('questions').children; },
-    createElement: element
+    createElement: element, body:element()
   };
   const localStorage = {
     getItem(k) { if (blockedStorage) throw Error('blocked'); return storage.get(k) ?? null; },
     setItem(k,v) { if (blockedStorage) throw Error('blocked'); storage.set(k,v); },
     removeItem(k) { if (blockedStorage) throw Error('blocked'); storage.delete(k); }
   };
-  const context = vm.createContext({ document, window: {localStorage, scrollTo() {}}, location: {hash: ''}, confirm: () => true, setTimeout() {}, console });
+  const context = vm.createContext({ document, window: {localStorage, scrollTo() {}}, location: {hash: ''}, confirm: () => true, setTimeout() {}, console, Blob, URL:{createObjectURL(blob){downloadBlobs.push(blob);return 'blob:test';},revokeObjectURL(){}} });
+  vm.runInContext(fs.readFileSync(path.join(__dirname, 'mbti.js'), 'utf8'), context);
   vm.runInContext(fs.readFileSync(path.join(__dirname, 'profile.js'), 'utf8'), context);
   vm.runInContext(fs.readFileSync(path.join(__dirname, 'app.js'), 'utf8'), context);
-  return { run: script => vm.runInContext(script, context), storage, document };
+  return { run: script => vm.runInContext(script, context), storage, document, downloadBlobs };
 }
 function fill(app, value) { app.run(`answers=Object.fromEntries(Array.from({length:70},(_,i)=>[i,${value}]))`); }
 function normalized(app, value) {
@@ -204,20 +208,125 @@ test('neutral and endpoint profiles are complete, finite and do not invent ranks
     assert.ok(result.sections.flatMap(s=>s.scores).every(s=>s.value===Number(high)*100));
   }
 });
-test('copy and render use the same narrative; MBTI never changes it', () => {
+test('MBTI changes the displayed and copied explanation but preserves the base score narrative', () => {
   const app=load();fill(app,3);
-  app.run('renderResults(calc())');
-  const before=JSON.stringify(report(app));
-  assert.equal(app.document.getElementById('summaryDetails').children.length,5);
-  assert.match(app.run('buildSummary()'),/判断と、意見の受け止め方/);
+  const before=JSON.stringify(report(app).sections);
+  const copied=[];
   for(const mbti of ['ENTP','ISFJ','']){
-    app.run(`profile.mbti=${JSON.stringify(mbti)}`);
-    assert.equal(JSON.stringify(report(app)),before);
+    app.run(`profile.mbti=${JSON.stringify(mbti)};renderResults(calc())`);
+    const full=app.run('buildLeadershipProfile(calc(),profile.mbti)');
+    const copy=app.run('buildSummary()');copied.push(copy);
+    assert.equal(JSON.stringify(full.sections),before);
+    assert.equal(app.document.getElementById('summaryCopy').textContent,full.lead);
+    assert.equal(app.document.getElementById('summaryDetails').children.length,5);
+    assert.match(copy,/判断と、意見の受け止め方/);
+    assert.equal(app.document.getElementById('mbtiDetails').classList.contains('hidden'),!mbti);
+    if(mbti){
+      assert.equal(app.document.getElementById('resultMbtiInput').value,mbti);
+      assert.equal(app.document.getElementById('mbtiDetails').children.length,8);
+      for(const part of full.mbti.sections)assert.ok(copy.includes(part.body));
+    }else{
+      assert.equal(full.mbti,null);
+      assert.equal(app.document.getElementById('mbtiDetails').children.length,0);
+      assert.doesNotMatch(copy,/今回の行動得点|MBTIだけで/);
+    }
   }
+  assert.equal(new Set(copied).size,3);
 });
 test('high autonomy with low coaching is not summarized as holding decisions', () => {
   const app=load();fill(app,3);
   app.run('sample=calc();sample.impacts.standards.index=90;sample.impacts.autonomy.index=90;sample.impacts.coaching.index=20');
   assert.match(app.run('buildLeadershipProfile(sample).lead'),/裁量を渡しつつ/);
   assert.doesNotMatch(app.run('buildLeadershipProfile(sample).lead'),/重要な判断は自分で持つ/);
+});
+
+test('all 16 MBTI types produce four distinct preference explanations with identical scoring', () => {
+  const app=load();fill(app,5);
+  const scores=JSON.stringify(app.run('calc()'));
+  const reports=new Map();
+  for(const type of app.run('mbtiValues')){
+    app.run(`profile.mbti=${JSON.stringify(type)}`);
+    const result=app.run('buildLeadershipProfile(calc(),profile.mbti)');
+    assert.equal(result.mbti.type,type);
+    assert.equal(result.mbti.sections.length,4);
+    assert.ok(result.mbti.sections.every(s=>s.body.length>100&&s.scores.every(x=>Number.isFinite(x.value))));
+    assert.doesNotMatch(result.lead+result.mbti.sections.map(s=>s.body).join(''),/undefined|NaN/);
+    assert.equal(JSON.stringify(app.run('calc()')),scores);
+    reports.set(type,result.mbti);
+  }
+  // Each changed preference must change prose, not just a type name or label.
+  const base=reports.get('ENTP');
+  for(const [type,index] of [['INTP',0],['ESTP',1],['ENFP',2],['ENTJ',3]]){
+    assert.notEqual(base.sections[index].body,reports.get(type).sections[index].body);
+  }
+});
+
+test('the same MBTI gets different prose as actual behavior combinations change', () => {
+  const app=load();fill(app,3);
+  app.run('sample=calc();sample.factors.imaginative.index=90;sample.factors.skeptical.index=95;sample.impacts.selfcorrect.index=90;sample.factors.diligent.index=90;sample.impacts.autonomy.index=90');
+  const first=app.run('buildMBTIContext(sample,"ENTP")');
+  assert.match(first.sections[2].body,/根拠のある指摘は自分の判断にも反映/);
+  assert.match(first.sections[3].body,/複数の余地を残して任せる/);
+  app.run('sample.factors.imaginative.index=20;sample.impacts.selfcorrect.index=20;sample.impacts.autonomy.index=20');
+  const second=app.run('buildMBTIContext(sample,"ENTP")');
+  assert.notEqual(first.lead,second.lead);
+  assert.match(second.sections[1].body,/発想の飛躍の回答は少なめ/);
+  assert.match(second.sections[2].body,/自分の判断を変える条件が対称/);
+  assert.match(second.sections[3].body,/メンバーの方法は細かく確認/);
+});
+
+test('MBTI preference letters do not override contradictory actual behavior', () => {
+  const app=load();fill(app,3);
+  app.run('sample=calc();sample.factors.reserved.index=20;sample.factors.imaginative.index=90;sample.impacts.safety.index=90');
+  const introvert=app.run('buildMBTIContext(sample,"ISTJ")');
+  assert.match(introvert.sections[0].body,/Iだから距離を置く/);
+  assert.match(introvert.sections[1].body,/Sだから新しい案を出さない/);
+  assert.match(introvert.sections[2].body,/筋道を重視しながら異論を聞く/);
+  app.run('sample.impacts.safety.index=20');
+  assert.match(app.run('buildMBTIContext(sample,"ISFJ").sections[2].body'),/人への配慮を意識していても/);
+});
+
+test('unselected and invalid MBTI fall back to behavior-only results', () => {
+  const app=load();fill(app,3);
+  const base=JSON.stringify(app.run('buildLeadershipProfile(calc())'));
+  for(const invalid of ['',null,undefined,123,'ENTP-A','enfp','ESTX','<script>']){
+    const js=invalid===undefined?'undefined':JSON.stringify(invalid);
+    assert.equal(app.run(`buildMBTIContext(calc(),${js})`),null);
+    assert.equal(JSON.stringify(app.run(`buildLeadershipProfile(calc(),${js})`)),base);
+  }
+  assert.equal(load({'derailer70MBTI':'invalid'}).run('profile.mbti'),'');
+  assert.match(app.run('buildLeadershipProfile(calc(),"ENTP").lead'),/MBTIだけでリーダー像を補って断定せず/);
+});
+
+test('changing MBTI persists without changing existing answers, question order or result scores', () => {
+  const saved=Object.fromEntries(Array.from({length:70},(_,id)=>[id,(id*7)%5+1]));
+  const app=load({'derailer70Answers':JSON.stringify(saved)});
+  app.run('renderQuestions();renderResults(calc())');
+  const order=app.run('JSON.stringify(ensureQuestionOrder())');
+  const results=JSON.stringify(app.run('window._latest'));
+  app.run('updateMBTI("ENTP")');
+  assert.equal(app.storage.get('derailer70MBTI'),'ENTP');
+  assert.equal(app.document.getElementById('mbtiInput').value,'ENTP');
+  assert.equal(app.document.getElementById('resultMbtiInput').value,'ENTP');
+  assert.equal(JSON.stringify(app.run('window._latest')),results);
+  assert.equal(app.run('JSON.stringify(ensureQuestionOrder())'),order);
+  assert.equal(app.storage.get('derailer70Answers'),JSON.stringify(saved));
+  const resumed=load(Object.fromEntries(app.storage));
+  assert.equal(resumed.run('profile.mbti'),'ENTP');
+  assert.equal(JSON.stringify(resumed.run('calc()')),results);
+  app.run('updateMBTI("not a type")');
+  assert.equal(app.storage.get('derailer70MBTI'),'');
+  assert.equal(app.document.getElementById('mbtiDetails').classList.contains('hidden'),true);
+});
+
+test('JSON export contains the selected MBTI, the exact displayed explanation and original scores', async () => {
+  const app=load();fill(app,5);
+  app.run('renderResults(calc());updateMBTI("ENTP");downloadJSON()');
+  const data=JSON.parse(await app.downloadBlobs[0].text());
+  assert.equal(data.version,'Leadership Derailer 70 v2.5');
+  assert.equal(data.profile.mbti,'ENTP');
+  assert.deepEqual(data.leadershipSummary,JSON.parse(JSON.stringify(app.run('buildLeadershipProfile(window._latest,profile.mbti)'))));
+  assert.equal(data.leadershipSummary.lead,app.document.getElementById('summaryCopy').textContent);
+  assert.deepEqual(data.results,JSON.parse(JSON.stringify(app.run('calc()'))));
+  assert.equal(Object.keys(data.answers).length,70);
 });

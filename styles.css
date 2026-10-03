@@ -16,9 +16,18 @@ button:focus-visible,input:focus-visible,select:focus-visible{outline:3px solid 
 .profile-intro{margin:22px 0 4px;padding-top:18px;border-top:1px solid var(--line)}
 .profile-section{padding:21px 0;border-top:1px solid var(--line)}
 .profile-section:first-child{border-top:0}.profile-section:last-child{padding-bottom:0}
-.profile-section h3{font-size:18px;line-height:1.5;margin:0 0 10px}
+.profile-section h3,.profile-section h4{font-size:18px;line-height:1.5;margin:0 0 10px}
 .profile-section p{font-size:15px;line-height:1.9;color:#c7d2e5;margin:12px 0 0;overflow-wrap:anywhere}
 .profile-evidence{list-style:none;padding:0;margin:0;display:flex;flex-wrap:wrap;gap:7px}
 .profile-evidence li{font-size:12px;line-height:1.5;border:1px solid var(--line);border-radius:8px;padding:5px 9px;color:var(--cyan);background:rgba(113,215,255,.04)}
-@media(max-width:480px){.profile-section h3{font-size:16px}.profile-section p{font-size:15px}.profile-evidence{gap:6px}.profile-evidence li{font-size:12px;padding:5px 7px}.profile-intro{line-height:1.8}}
+@media(max-width:480px){.profile-section h3,.profile-section h4{font-size:16px}.profile-section p{font-size:15px}.profile-evidence{gap:6px}.profile-evidence li{font-size:12px;padding:5px 7px}.profile-intro{line-height:1.8}}
 @media print{.profile-section{break-inside:avoid}.profile-section p,.profile-evidence li{color:#222!important}.profile-evidence li{background:white;border-color:#ccc}}
+
+.mbti-controls{display:flex;align-items:end;flex-wrap:wrap;gap:12px;margin:20px 0}
+.mbti-controls .field{width:min(100%,290px)}.mbti-controls p{flex:1 1 230px;margin:0 0 8px}
+.mbti-details{border:1px solid #385370;background:rgba(113,215,255,.025);border-radius:14px;padding:20px;margin:20px 0 4px;min-width:0}
+.mbti-heading{font-size:21px;line-height:1.5;margin:0 0 10px;color:var(--cyan);overflow-wrap:anywhere}
+.mbti-description{font-size:14px;line-height:1.9;color:#c7d2e5;margin:0 0 18px;overflow-wrap:anywhere}
+.mbti-note{margin:18px 0 10px;line-height:1.8}.mbti-details a{color:var(--cyan);overflow-wrap:anywhere}
+@media(max-width:480px){.mbti-details{padding:16px 13px}.mbti-heading{font-size:19px}.mbti-controls{gap:6px}.mbti-controls .field{width:100%}.mbti-controls p{margin:0}}
+@media print{.mbti-details{background:white;border-color:#ccc}.mbti-heading,.mbti-description,.mbti-details a{color:#222!important}}

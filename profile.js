@@ -1,6 +1,6 @@
 // Interpret the actual factor/impact scores, independently of the nearest type.
 // These are reflection prompts, not validated cutoffs or population comparisons.
-function buildLeadershipProfile(r) {
+function buildLeadershipProfile(r, selectedMBTI="") {
   const f=Object.fromEntries(Object.entries(r.factors).map(([k,v])=>[k,v.index]));
   const i=Object.fromEntries(Object.entries(r.impacts).map(([k,v])=>[k,v.index]));
   const high=v=>v>=70, low=v=>v<40;
@@ -126,7 +126,9 @@ function buildLeadershipProfile(r) {
   }else{
     focus.push("伸ばす候補は、場面によって変わる関わり方を言葉にすることです。1つの仕事で『本人が決める範囲・相談の条件・次の確認日』を共有し、忙しさで途中から判断を引き取っていないかを4週間振り返ってください。");
   }
-  return {lead,sections:[
+  const mbti=buildMBTIContext(r,selectedMBTI);
+  if(mbti)lead+=` ${mbti.lead}`;
+  return {lead,mbti,sections:[
     {title:"仕事の進め方",body:work.join(" "),scores:scores(["diligent","imaginative","mischievous"],["standards"])},
     {title:"判断と、意見の受け止め方",body:judgment.join(" "),scores:scores(["skeptical","cautious","bold","dutiful"],["selfcorrect"])},
     {title:"任せ方と、チームを育てる関わり",body:delegation.join(" "),scores:scores([],["autonomy","coaching","safety","selfcorrect"])},
@@ -136,21 +138,34 @@ function buildLeadershipProfile(r) {
 }
 
 function leadershipProfileText(report){
-  return [report.lead,...report.sections.map(s=>`${s.title}\n${s.scores.map(x=>`${x.label} ${x.value}/100`).join(" / ")}\n${s.body}`)].join("\n\n");
+  const sectionText=s=>`${s.title}\n${s.scores.map(x=>`${x.label} ${x.value}/100`).join(" / ")}\n${s.body}`;
+  return [report.lead,...(report.mbti?[report.mbti.title,report.mbti.description,report.mbti.note,...report.mbti.sections.map(sectionText),`MBTIの選好の参考: ${report.mbti.source}`]:[]),...report.sections.map(sectionText)].join("\n\n");
 }
-function renderLeadershipProfile(r){
-  const report=buildLeadershipProfile(r);
+function appendLeadershipSection(root,part,headingLevel="h3"){
+  const section=document.createElement("section");section.className="profile-section";
+  const heading=document.createElement(headingLevel);heading.textContent=part.title;section.appendChild(heading);
+  if(part.scores.length){
+    const list=document.createElement("ul");list.className="profile-evidence";list.setAttribute("aria-label","説明に用いた得点");
+    part.scores.forEach(score=>{const item=document.createElement("li");item.textContent=`${score.label} ${score.value}/100`;list.appendChild(item)});
+    section.appendChild(list);
+  }
+  const body=document.createElement("p");body.textContent=part.body;section.appendChild(body);root.appendChild(section);
+}
+function renderLeadershipProfile(r,selectedMBTI=""){
+  const report=buildLeadershipProfile(r,selectedMBTI);
   document.getElementById("summaryCopy").textContent=report.lead;
   const root=document.getElementById("summaryDetails");
   root.innerHTML="";
-  report.sections.forEach(part=>{
-    const section=document.createElement("section");section.className="profile-section";
-    const heading=document.createElement("h3");heading.textContent=part.title;section.appendChild(heading);
-    if(part.scores.length){
-      const list=document.createElement("ul");list.className="profile-evidence";list.setAttribute("aria-label","説明に用いた得点");
-      part.scores.forEach(score=>{const item=document.createElement("li");item.textContent=`${score.label} ${score.value}/100`;list.appendChild(item)});
-      section.appendChild(list);
-    }
-    const body=document.createElement("p");body.textContent=part.body;section.appendChild(body);root.appendChild(section);
-  });
+  report.sections.forEach(part=>appendLeadershipSection(root,part));
+  const mbtiRoot=document.getElementById("mbtiDetails");
+  mbtiRoot.innerHTML="";
+  mbtiRoot.classList[report.mbti?"remove":"add"]("hidden");
+  if(report.mbti){
+    const heading=document.createElement("h3");heading.className="mbti-heading";heading.textContent=report.mbti.title;mbtiRoot.appendChild(heading);
+    const description=document.createElement("p");description.className="mbti-description";description.textContent=report.mbti.description;mbtiRoot.appendChild(description);
+    report.mbti.sections.forEach(part=>appendLeadershipSection(mbtiRoot,part,"h4"));
+    const note=document.createElement("p");note.className="note mbti-note";note.textContent=report.mbti.note;mbtiRoot.appendChild(note);
+    const source=document.createElement("a");source.className="note";source.href=report.mbti.source;source.target="_blank";source.rel="noopener noreferrer";source.textContent="MBTIの4つの選好について（Myers & Briggs Foundation）";mbtiRoot.appendChild(source);
+  }
+  return report;
 }
