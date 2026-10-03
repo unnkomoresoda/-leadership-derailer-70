@@ -29,5 +29,7 @@ button:focus-visible,input:focus-visible,select:focus-visible{outline:3px solid 
 .mbti-heading{font-size:21px;line-height:1.5;margin:0 0 10px;color:var(--cyan);overflow-wrap:anywhere}
 .mbti-description{font-size:14px;line-height:1.9;color:#c7d2e5;margin:0 0 18px;overflow-wrap:anywhere}
 .mbti-note{margin:18px 0 10px;line-height:1.8}.mbti-details a{color:var(--cyan);overflow-wrap:anywhere}
+.mbti-section .mbti-controls{margin-top:0}
+.mbti-section .mbti-details{border:0;border-top:1px solid var(--line);border-radius:0;padding:20px 0 0;background:transparent;margin-bottom:0}
 @media(max-width:480px){.mbti-details{padding:16px 13px}.mbti-heading{font-size:19px}.mbti-controls{gap:6px}.mbti-controls .field{width:100%}.mbti-controls p{margin:0}}
 @media print{.mbti-details{background:white;border-color:#ccc}.mbti-heading,.mbti-description,.mbti-details a{color:#222!important}}
