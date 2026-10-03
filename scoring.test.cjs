@@ -29,6 +29,7 @@ function load(initialStorage = {}, blockedStorage = false) {
     removeItem(k) { if (blockedStorage) throw Error('blocked'); storage.delete(k); }
   };
   const context = vm.createContext({ document, window: {localStorage, scrollTo() {}}, location: {hash: ''}, confirm: () => true, setTimeout() {}, console });
+  vm.runInContext(fs.readFileSync(path.join(__dirname, 'profile.js'), 'utf8'), context);
   vm.runInContext(fs.readFileSync(path.join(__dirname, 'app.js'), 'utf8'), context);
   return { run: script => vm.runInContext(script, context), storage, document };
 }
@@ -139,4 +140,84 @@ test('order changes do not alter scoring and neutral results acknowledge ties', 
   assert.match(app.document.getElementById('types').innerHTML,/類似度/);
   assert.doesNotMatch(app.document.getElementById('types').innerHTML,/% fit/);
   assert.match(app.document.getElementById('development').innerHTML,/11項目が同点/);
+});
+
+function report(app) { return JSON.parse(JSON.stringify(app.run('buildLeadershipProfile(calc())'))); }
+function words(result) { return result.lead+'\n'+result.sections.map(s=>s.body).join('\n'); }
+
+test('the same archetype gets different prose when individual factors differ', () => {
+  const app=load();fill(app,3);
+  // Swap two factors within the same cluster: identical 8D type vector,
+  // different actual behavior. Scoring IDs remain canonical.
+  app.run('derailerQuestions.forEach((q,id)=>{if(["skeptical","reserved"].includes(q[0]))answers[id]=(q[0]==="skeptical")===(q[2]===1)?5:1})');
+  const first=report(app),types=JSON.stringify(app.run('calc().typeScores'));
+  app.run('derailerQuestions.forEach((q,id)=>{if(["skeptical","reserved"].includes(q[0]))answers[id]=6-answers[id]})');
+  const second=report(app);
+  assert.equal(JSON.stringify(app.run('calc().typeScores')),types);
+  assert.notEqual(first.sections[1].body,second.sections[1].body);
+  assert.notEqual(first.sections[3].body,second.sections[3].body);
+});
+test('all 16 scores affect interpretation, not only visible numbers', () => {
+  const app=load();fill(app,3);
+  app.run('baseline=calc()');
+  const before=words(app.run('buildLeadershipProfile(baseline)'));
+  for(const kind of ['factors','impacts']){
+    const keys=app.run(`Object.keys(baseline.${kind})`);
+    for(const key of keys){
+      const after=words(app.run(`(()=>{const r=JSON.parse(JSON.stringify(baseline));r.${kind}[${JSON.stringify(key)}].index=80;return buildLeadershipProfile(r)})()`));
+      assert.notEqual(after,before,`${kind}.${key} must change the narrative`);
+    }
+  }
+});
+test('high skepticism is read differently with high vs low self-correction', () => {
+  const app=load();fill(app,3);
+  app.run('sample=calc();sample.factors.skeptical.index=90;sample.impacts.selfcorrect.index=90');
+  const receptive=app.run('buildLeadershipProfile(sample).sections[1].body');
+  assert.match(receptive,/根拠があれば考えを変える/);
+  app.run('sample.impacts.selfcorrect.index=20');
+  const fixed=app.run('buildLeadershipProfile(sample).sections[1].body');
+  assert.match(fixed,/自分の見方を更新する行動が控えめ/);
+  assert.doesNotMatch(fixed,/根拠があれば考えを変える/);
+});
+test('relative support differences do not label midrange delegation as inability', () => {
+  const app=load();fill(app,3);
+  app.run('sample=calc();sample.impacts.autonomy.index=65;sample.impacts.coaching.index=65;sample.impacts.safety.index=95;sample.impacts.selfcorrect.index=95;sample.multiplier=80');
+  const body=app.run('buildLeadershipProfile(sample).sections[2].body');
+  assert.match(body,/相対的な差/);
+  assert.match(body,/苦手だと断定する結果ではありません/);
+  assert.match(body,/65・65/);
+  assert.doesNotMatch(body,/自走支援の回答は少なめ/);
+});
+test('neutral and endpoint profiles are complete, finite and do not invent ranks', () => {
+  const app=load();fill(app,3);
+  const neutral=report(app);
+  assert.match(neutral.lead,/言い切れません/);
+  assert.match(neutral.sections[4].body,/すべて同じ得点/);
+  const used=new Set(neutral.sections.flatMap(s=>s.scores.map(x=>x.kind+'.'+x.key)));
+  assert.equal(used.size,16);
+  for(const high of [false,true]){
+    app.run(`answers=Object.fromEntries([...derailerQuestions,...impactQuestions].map((q,id)=>[id,q[2]===-1?${high?1:5}:${high?5:1}]))`);
+    const result=report(app);
+    assert.equal(result.sections.length,5);
+    assert.ok(result.sections.every(s=>s.body.length>100));
+    assert.doesNotMatch(words(result),/undefined|NaN/);
+    assert.ok(result.sections.flatMap(s=>s.scores).every(s=>s.value===Number(high)*100));
+  }
+});
+test('copy and render use the same narrative; MBTI never changes it', () => {
+  const app=load();fill(app,3);
+  app.run('renderResults(calc())');
+  const before=JSON.stringify(report(app));
+  assert.equal(app.document.getElementById('summaryDetails').children.length,5);
+  assert.match(app.run('buildSummary()'),/判断と、意見の受け止め方/);
+  for(const mbti of ['ENTP','ISFJ','']){
+    app.run(`profile.mbti=${JSON.stringify(mbti)}`);
+    assert.equal(JSON.stringify(report(app)),before);
+  }
+});
+test('high autonomy with low coaching is not summarized as holding decisions', () => {
+  const app=load();fill(app,3);
+  app.run('sample=calc();sample.impacts.standards.index=90;sample.impacts.autonomy.index=90;sample.impacts.coaching.index=20');
+  assert.match(app.run('buildLeadershipProfile(sample).lead'),/裁量を渡しつつ/);
+  assert.doesNotMatch(app.run('buildLeadershipProfile(sample).lead'),/重要な判断は自分で持つ/);
 });

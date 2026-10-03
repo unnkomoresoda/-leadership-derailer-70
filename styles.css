@@ -11,3 +11,14 @@ button:focus-visible,input:focus-visible,select:focus-visible{outline:3px solid 
 @media(max-width:480px){.hero{padding-top:36px}.card{padding:18px}.question{padding:16px}.qtext{font-size:15px}.qnum{min-width:29px;height:29px}.qtop{gap:9px}.option label{font-size:10.5px;min-height:80px;padding:4px 1px}.factor-head{flex-wrap:wrap;gap:4px}.factor-en{margin-left:0}.impact-grid{grid-template-columns:1fr!important}.actions button{min-height:46px}input[type=text],select{font-size:16px}.result-hero{padding-top:30px}}
 @media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}*,*::before,*::after{transition:none!important}}
 @media print{.question,.factor,.type-card,.metric,.pattern-card,.action-card{break-inside:avoid}.bigscore .num,.kicker,.eyebrow,.qnum,.action-card::before{color:#111!important}.option input:checked+label{color:#111}.dot{background:#444!important}.toast{display:none!important}}
+
+/* Individual narrative: evidence stays close to its explanation. */
+.profile-intro{margin:22px 0 4px;padding-top:18px;border-top:1px solid var(--line)}
+.profile-section{padding:21px 0;border-top:1px solid var(--line)}
+.profile-section:first-child{border-top:0}.profile-section:last-child{padding-bottom:0}
+.profile-section h3{font-size:18px;line-height:1.5;margin:0 0 10px}
+.profile-section p{font-size:15px;line-height:1.9;color:#c7d2e5;margin:12px 0 0;overflow-wrap:anywhere}
+.profile-evidence{list-style:none;padding:0;margin:0;display:flex;flex-wrap:wrap;gap:7px}
+.profile-evidence li{font-size:12px;line-height:1.5;border:1px solid var(--line);border-radius:8px;padding:5px 9px;color:var(--cyan);background:rgba(113,215,255,.04)}
+@media(max-width:480px){.profile-section h3{font-size:16px}.profile-section p{font-size:15px}.profile-evidence{gap:6px}.profile-evidence li{font-size:12px;padding:5px 7px}.profile-intro{line-height:1.8}}
+@media print{.profile-section{break-inside:avoid}.profile-section p,.profile-evidence li{color:#222!important}.profile-evidence li{background:white;border-color:#ccc}}
