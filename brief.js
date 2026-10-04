@@ -131,9 +131,8 @@ function leadershipBriefText(brief){
 }
 function renderLeadershipBrief(r){
   const brief=buildLeadershipBrief(r);
-  document.getElementById('summaryTitle').textContent=brief.strength.title;
   const root=document.getElementById('briefCards');root.innerHTML='';
-  [['あなたの持ち味',brief.strength],['空回りしやすい場面',brief.watch],['持ち味を活かすアドバイス',brief.action]].forEach(([label,p],n)=>{
+  [['あなたの持ち味',brief.strength],['空回りしやすい場面',brief.watch],['今のあなたへのアドバイス',brief.action]].forEach(([label,p],n)=>{
     const card=document.createElement('section');card.className='brief-card';
     const heading=document.createElement('header');heading.className='brief-heading';
     const labelEl=document.createElement('div');labelEl.className='kicker';labelEl.textContent=`0${n+1}  ${label}`;heading.appendChild(labelEl);

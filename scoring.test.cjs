@@ -32,6 +32,8 @@ function load(initialStorage = {}, blockedStorage = false) {
     removeItem(k) { if (blockedStorage) throw Error('blocked'); storage.delete(k); }
   };
   const context = vm.createContext({ document, window: {localStorage, scrollTo() {}}, location: {hash: ''}, confirm: () => true, setTimeout() {}, console, Blob, URL:{createObjectURL(blob){downloadBlobs.push(blob);return 'blob:test';},revokeObjectURL(){}} });
+  vm.runInContext(fs.readFileSync(path.join(__dirname, 'type-catalog.js'), 'utf8'), context);
+  vm.runInContext(fs.readFileSync(path.join(__dirname, 'type-results.js'), 'utf8'), context);
   vm.runInContext(fs.readFileSync(path.join(__dirname, 'profile.js'), 'utf8'), context);
   vm.runInContext(fs.readFileSync(path.join(__dirname, 'brief.js'), 'utf8'), context);
   vm.runInContext(fs.readFileSync(path.join(__dirname, 'app.js'), 'utf8'), context);
@@ -277,9 +279,71 @@ test('legacy optional data is ignored while saved 70 answers and order still res
  const data=JSON.parse(await app.downloadBlobs[0].text());
  assert.deepEqual(data.profile,{name:'確認例'});
  assert.deepEqual(data.answers,answers);
- assert.equal(data.version,'Leadership Derailer 70 v2.7');
+ assert.equal(data.version,'Leadership Derailer 70 v2.8');
  assert.equal('practice' in data,false);
  assert.equal('mbti' in data.leadershipSummary,false);
  assert.equal(data.brief.action.paragraphs.length,2);
  assert.doesNotMatch(app.run('buildSummary()'),/ENTP|MBTI|old journal/);
+});
+
+test('all 28 unordered pairs are unique and preserve Primary/Secondary order',()=>{
+ const app=load();
+ assert.equal(app.run('LEADERSHIP_TYPES.length'),28);
+ assert.equal(app.run('new Set(LEADERSHIP_TYPES.map(t=>`${t.a}:${t.b}`)).size'),28);
+ assert.equal(app.run('new Set(LEADERSHIP_TYPES.map(t=>t.id)).size'),28);
+ for(let a=0;a<8;a++)for(let b=a+1;b<8;b++){
+  const forward=app.run(`getCombinationType([{name:LEADERSHIP_BASES[${a}].name,fit:88},{name:LEADERSHIP_BASES[${b}].name,fit:81}])`);
+  const reverse=app.run(`getCombinationType([{name:LEADERSHIP_BASES[${b}].name,fit:88},{name:LEADERSHIP_BASES[${a}].name,fit:81}])`);
+  assert.equal(forward.id,reverse.id);
+  assert.notEqual(forward.primary.name,reverse.primary.name);
+  assert.equal(forward.primary.fit,88);
+ }
+ assert.equal(app.run('getCombinationType([{name:"Independent Strategist",fit:92},{name:"Team Multiplier",fit:86}]).id'),'autonomous-strategist');
+});
+test('every catalog type has complete, individually written mechanisms and working referenced names',()=>{
+ const app=load();
+ assert.equal(app.run('LEADERSHIP_TYPE_ROWS.every(t=>t[5].length===LEADERSHIP_TYPE_FIELDS.length)'),true);
+ assert.equal(app.run('LEADERSHIP_TYPES.every(t=>LEADERSHIP_TYPE_FIELDS.every(k=>typeof t[k]==="string"&&t[k].length>10))'),true);
+ for(const key of ['essence','success','pressure','process','derailer','growth'])assert.equal(app.run(`new Set(LEADERSHIP_TYPES.map(t=>t.${key})).size`),28);
+ assert.equal(app.run('LEADERSHIP_TYPES.every(t=>[t.cooperate,t.friction].every(s=>LEADERSHIP_TYPES.some(other=>other.id!==t.id&&s.includes(other.jp))))'),true);
+ assert.equal(app.run('LEADERSHIP_BASES.every(b=>LEADERSHIP_TYPES.filter(t=>t.a===b.index||t.b===b.index).length===7)'),true);
+});
+test('individual highlights depend on score relationships, not the fixed type',()=>{
+ const app=load();fill(app,3);
+ const result=app.run('calc()');
+ result.factors.skeptical.index=95;result.impacts.selfcorrect.index=100;
+ const strong=JSON.parse(JSON.stringify(app.run(`buildPersonalHighlights(${JSON.stringify(result)})`)));
+ assert.equal(strong.weapon.id,'question-update');
+ assert.equal(strong.weapon.scores.length,2);
+ result.impacts.selfcorrect.index=0;
+ const low=app.run(`buildPersonalHighlights(${JSON.stringify(result)})`);
+ assert.notEqual(low.weapon.id,strong.weapon.id);
+ assert.equal(low.risk.id,'one-sided-test');
+ assert.notEqual(low.advice.key,strong.advice.key);
+ const reversed={...result,typeScores:[...result.typeScores].reverse()};
+ assert.deepEqual(JSON.parse(JSON.stringify(app.run(`buildPersonalHighlights(${JSON.stringify(reversed)})`))),JSON.parse(JSON.stringify(low)));
+});
+test('neutral and extreme highlights are finite and acknowledge non-distinctive answers',()=>{
+ const app=load();
+ for(const high of [null,false,true]){
+  if(high===null)fill(app,3);else app.run(`answers=Object.fromEntries([...derailerQuestions,...impactQuestions].map((q,i)=>[i,q[2]===-1?${high?1:5}:${high?5:1}]))`);
+  const h=app.run('buildPersonalHighlights(calc())');
+  assert.ok(Number.isFinite(h.weapon.priority));assert.ok(h.risk.priority>=0&&h.risk.priority<=100);
+  assert.equal(h.weapon.id,'contextual');assert.equal(h.risk.id,'no-clear-risk');
+ }
+});
+test('result title is the 28-type name and copy/JSON retain original and new layers',async()=>{
+ const app=load();fill(app,3);app.run('renderResults(calc());downloadJSON()');
+ const type=app.run('getCombinationType(calc().typeScores)');
+ assert.equal(app.document.getElementById('summaryTitle').textContent,type.jp);
+ assert.equal(app.document.getElementById('typeDetailLink').href,`./types.html#${type.id}`);
+ const copy=app.run('buildSummary()');assert.ok(copy.includes('あなたの場合'));assert.ok(copy.includes(type.jp));assert.ok(copy.includes('最大のリスク'));assert.ok(copy.includes('負荷が高いときの、周囲への伝わり方'));
+ const payload=JSON.parse(await app.downloadBlobs[0].text());
+ assert.equal(payload.combinationType.id,type.id);assert.equal(Object.keys(payload.results.factors).length,11);assert.equal(Object.keys(payload.results.impacts).length,5);assert.equal(payload.leadershipSummary.sections.length,5);assert.equal(Object.keys(payload.answers).length,70);
+ assert.equal(app.document.getElementById('personalContexts').children.length,4);
+ assert.equal(app.document.getElementById('personalHighlights').children.length,2);
+});
+test('printing opens details for the output then restores the previous state',()=>{
+ const app=load();
+ assert.equal(app.run(`(()=>{const a={open:false},b={open:true};document.querySelectorAll=()=>[a,b];let restore;window.addEventListener=(event,fn)=>{restore=fn};window.print=()=>{};printResults();const opened=a.open&&b.open;restore();return opened&&!a.open&&b.open})()`),true);
 });
