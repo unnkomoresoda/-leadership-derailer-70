@@ -34,6 +34,8 @@ function load(initialStorage = {}, blockedStorage = false) {
   const context = vm.createContext({ document, window: {localStorage, scrollTo() {}}, location: {hash: ''}, confirm: () => true, setTimeout() {}, console, Blob, URL:{createObjectURL(blob){downloadBlobs.push(blob);return 'blob:test';},revokeObjectURL(){}} });
   vm.runInContext(fs.readFileSync(path.join(__dirname, 'mbti.js'), 'utf8'), context);
   vm.runInContext(fs.readFileSync(path.join(__dirname, 'profile.js'), 'utf8'), context);
+  vm.runInContext(fs.readFileSync(path.join(__dirname, 'brief.js'), 'utf8'), context);
+  vm.runInContext(fs.readFileSync(path.join(__dirname, 'practice.js'), 'utf8'), context);
   vm.runInContext(fs.readFileSync(path.join(__dirname, 'app.js'), 'utf8'), context);
   return { run: script => vm.runInContext(script, context), storage, document, downloadBlobs };
 }
@@ -323,10 +325,119 @@ test('JSON export contains the selected MBTI, the exact displayed explanation an
   const app=load();fill(app,5);
   app.run('renderResults(calc());updateMBTI("ENTP");downloadJSON()');
   const data=JSON.parse(await app.downloadBlobs[0].text());
-  assert.equal(data.version,'Leadership Derailer 70 v2.5');
+  assert.equal(data.version,'Leadership Derailer 70 v2.6');
   assert.equal(data.profile.mbti,'ENTP');
   assert.deepEqual(data.leadershipSummary,JSON.parse(JSON.stringify(app.run('buildLeadershipProfile(window._latest,profile.mbti)'))));
   assert.equal(data.leadershipSummary.lead,app.document.getElementById('summaryCopy').textContent);
   assert.deepEqual(data.results,JSON.parse(JSON.stringify(app.run('calc()'))));
   assert.equal(Object.keys(data.answers).length,70);
+});
+
+test('the short reading changes its meaning and action when the score combination changes', () => {
+  const app=load();fill(app,3);
+  app.run('sample=calc();sample.factors.skeptical.index=95;sample.impacts.selfcorrect.index=90');
+  const receptive=app.run('buildLeadershipBrief(sample)');
+  assert.match(receptive.strength.body,/筋の通った指摘は自分にも/);
+  app.run('sample.impacts.selfcorrect.index=20');
+  const fixed=app.run('buildLeadershipBrief(sample)');
+  assert.match(fixed.watch.body,/自分の案だけ検証/);
+  assert.equal(fixed.action.key,'selfcorrect');
+  assert.notEqual(fixed.strength.body,receptive.strength.body);
+  app.run('sample=calc();sample.impacts.autonomy.index=95;sample.impacts.coaching.index=20');
+  const delegation=app.run('buildLeadershipBrief(sample)');
+  assert.match(delegation.watch.body,/裁量は渡す/);
+  assert.doesNotMatch(delegation.watch.body,/判断を引き取る/);
+  assert.equal(delegation.action.key,'coaching');
+});
+
+test('short readings acknowledge neutral profiles and relative differences without changing scores', () => {
+  const app=load();fill(app,3);
+  const neutral=app.run('buildLeadershipBrief(calc())');
+  assert.match(neutral.strength.body,/1つの強いリーダー像に絞れません/);
+  assert.match(neutral.watch.body,/特定の落とし穴を強く決めつける必要はありません/);
+  app.run('sample=calc();sample.impacts.safety.index=95;sample.impacts.selfcorrect.index=95;sample.impacts.autonomy.index=65;sample.impacts.coaching.index=65');
+  assert.match(app.run('buildLeadershipBrief(sample).watch.body'),/苦手という判定ではありません/);
+  const scores=JSON.stringify(app.run('calc()'));
+  app.run('renderResults(calc());updateMBTI("ENTP")');
+  const first=JSON.stringify(app.run('buildLeadershipBrief(window._latest)'));
+  app.run('updateMBTI("ISFJ")');
+  assert.equal(JSON.stringify(app.run('buildLeadershipBrief(window._latest)')),first);
+  assert.equal(JSON.stringify(app.run('calc()')),scores);
+});
+
+test('practice plans and weekly records survive reload, MBTI changes and answer resets', () => {
+  const app=load();fill(app,3);app.run('renderResults(calc())');
+  app.document.getElementById('practiceContext').value='水曜の定例';
+  app.document.getElementById('practiceSignal').value='本人から案が出たか';
+  app.run('savePractice()');
+  app.document.getElementById('practiceOutcome').value='tried';
+  app.document.getElementById('practiceNote').value='2案出た';
+  app.run('savePracticeReflection()');
+  const saved=app.storage.get('derailer70Practice');
+  app.document.getElementById('practiceNote').value='まだ保存していないメモ';
+  app.document.getElementById('practiceContext').value='入力途中の別の場面';
+  app.run('updateMBTI("ENTP")');
+  assert.equal(app.document.getElementById('practiceNote').value,'まだ保存していないメモ');
+  assert.equal(app.document.getElementById('practiceContext').value,'入力途中の別の場面');
+  assert.equal(app.storage.get('derailer70Practice'),saved);
+  app.run('resetQuiz()');
+  assert.equal(app.storage.get('derailer70Practice'),saved);
+  const reload=load(Object.fromEntries(app.storage));fill(reload,3);reload.run('renderResults(calc())');
+  assert.equal(reload.document.getElementById('practiceContext').value,'水曜の定例');
+  assert.equal(reload.run('practicePlan.reflections[0].note'),'2案出た');
+  assert.equal(reload.run('practicePlan.reflections[0].week'),1);
+});
+
+test('practice edits preserve earlier action snapshots and prevent unsaved mismatches', () => {
+  const app=load();fill(app,3);app.run('renderResults(calc())');
+  app.document.getElementById('practiceContext').value='定例';
+  app.document.getElementById('practiceSignal').value='本人の提案';
+  app.run('savePractice()');
+  app.document.getElementById('practiceOutcome').value='tried';
+  app.run('savePracticeReflection()');
+  const title=app.run('practicePlan.reflections[0].actionTitle');
+  app.document.getElementById('practiceAction').value='selfcorrect';
+  app.document.getElementById('practiceWeek').value='2';
+  app.run('savePracticeReflection()');
+  assert.equal(app.run('practicePlan.reflections.length'),1);
+  assert.match(app.document.getElementById('practiceStatus').textContent,/先に/);
+  app.run('savePractice();savePracticeReflection()');
+  assert.equal(app.run('practicePlan.reflections[0].actionTitle'),title);
+  assert.equal(app.run('practicePlan.reflections[1].actionTitle'),'判断ログ');
+  app.document.getElementById('practiceNote').value='同じ週の追記';
+  app.run('savePracticeReflection()');
+  assert.equal(app.run('practicePlan.reflections.length'),2);
+  assert.equal(app.run('practicePlan.reflections[1].note'),'同じ週の追記');
+  app.document.getElementById('practiceWeek').value='1';
+  app.run('populatePracticeReflection();savePracticeReflection()');
+  assert.equal(app.run('practicePlan.reflections[0].actionTitle'),title);
+});
+
+test('invalid practice data is bounded and rejected without breaking the questionnaire', () => {
+  for(const data of ['null','{invalid','[]','{"version":2}','{"version":1,"actionKey":"__proto__"}']){
+    const app=load({'derailer70Practice':data});assert.equal(app.run('practicePlan'),null);
+    fill(app,3);app.run('renderResults(calc())');assert.equal(app.run('calc().multiplier'),50);
+  }
+  const data={version:1,actionKey:'autonomy',context:'x'.repeat(500),signal:'本人の提案',startedAt:'2026-10-04T09:00:00.000Z',reflections:[
+    {week:1,outcome:'tried',note:'x'.repeat(1000),savedAt:'2026-10-11T09:00:00.000Z'},
+    {week:1,outcome:'tried',savedAt:'2026-10-11T09:00:00.000Z'},
+    {week:5,outcome:'tried',savedAt:'2026-10-11T09:00:00.000Z'},
+    {week:2,outcome:'invalid',savedAt:'2026-10-11T09:00:00.000Z'}]};
+  const app=load({'derailer70Practice':JSON.stringify(data)});
+  assert.equal(app.run('practicePlan.context.length'),240);
+  assert.equal(app.run('practicePlan.reflections.length'),1);
+  assert.equal(app.run('practicePlan.reflections[0].note.length'),800);
+  assert.equal(app.run('practiceReviewDate(practicePlan,1)'),'2026-10-11T09:00:00.000Z');
+});
+
+test('blocked practice storage reports failure and export still retains the in-memory record', async () => {
+  const app=load({},true);fill(app,3);app.run('renderResults(calc())');
+  app.document.getElementById('practiceContext').value='定例';
+  app.document.getElementById('practiceSignal').value='発言の変化';
+  app.run('savePractice();downloadJSON()');
+  assert.match(app.document.getElementById('practiceStatus').textContent,/保存できません/);
+  const data=JSON.parse(await app.downloadBlobs[0].text());
+  assert.equal(data.practice.context,'定例');
+  assert.equal(data.brief.strength.title,app.run('buildLeadershipBrief(calc()).strength.title'));
+  assert.match(app.run('buildSummary()'),/試す場面：定例/);
 });
