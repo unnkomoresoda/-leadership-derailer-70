@@ -39,6 +39,7 @@ function renderPractice(r){
   }
   practiceRendered=true;renderPracticeAction();renderPracticeHistory();
   document.getElementById('reflectionFields').classList[practicePlan?'remove':'add']('hidden');
+  document.getElementById('clearPracticeBtn').classList[practicePlan?'remove':'add']('hidden');
   document.getElementById('savePracticeBtn').textContent=practicePlan?'取り組みを更新する':'この取り組みを保存する';
 }
 function renderPracticeAction(){
@@ -98,10 +99,17 @@ function practiceText(plan){
   if(!plan)return '';
   return ['4週間の取り組み',actionLibrary[plan.actionKey][0],`試す場面：${plan.context}`,`見る変化：${plan.signal}`,...plan.reflections.map(row=>`${row.week}週目：${practiceOutcomes[row.outcome]}\n${row.actionTitle} ／ ${row.context}\n見る変化：${row.signal}\n${row.note}`)].join('\n');
 }
+function clearPractice(){
+  if(!practicePlan||!confirm('取り組みと4週分の振り返りを削除しますか？ この操作は元に戻せません。70問の回答と診断結果は残ります。'))return;
+  try{window.localStorage.removeItem(PRACTICE_KEY)}catch(e){setPracticeStatus('記録を削除できませんでした。ブラウザの保存設定を確認してください。');return}
+  practicePlan=null;practiceRendered=false;renderPractice(window._latest);
+  setPracticeStatus('取り組みと振り返りを削除しました。');
+}
 function bindPractice(){
   practicePlan=loadPractice();
   document.getElementById('practiceAction').addEventListener('change',renderPracticeAction);
   document.getElementById('savePracticeBtn').addEventListener('click',savePractice);
   document.getElementById('practiceWeek').addEventListener('change',populatePracticeReflection);
   document.getElementById('saveReflectionBtn').addEventListener('click',savePracticeReflection);
+  document.getElementById('clearPracticeBtn').addEventListener('click',clearPractice);
 }

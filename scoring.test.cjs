@@ -441,3 +441,15 @@ test('blocked practice storage reports failure and export still retains the in-m
   assert.equal(data.brief.strength.title,app.run('buildLeadershipBrief(calc()).strength.title'));
   assert.match(app.run('buildSummary()'),/試す場面：定例/);
 });
+
+test('clearing practice removes only the journal and keeps the answers, order and MBTI', () => {
+  const app=load();fill(app,3);app.run('renderQuestions();renderResults(calc());updateMBTI("ENTP")');
+  const before=app.run('JSON.stringify({answers,questionOrder,profile,results:window._latest})');
+  app.document.getElementById('practiceContext').value='定例';
+  app.document.getElementById('practiceSignal').value='本人の案';
+  app.run('savePractice();clearPractice()');
+  assert.equal(app.storage.has('derailer70Practice'),false);
+  assert.equal(app.run('practicePlan'),null);
+  assert.equal(app.document.getElementById('practiceContext').value,'');
+  assert.equal(app.run('JSON.stringify({answers,questionOrder,profile,results:window._latest})'),before);
+});
