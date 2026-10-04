@@ -3,10 +3,10 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<meta name="description" content="70問で、任せ方・意見の聞き方・育て方を振り返る。あなたの持ち味、空回りしやすい場面、今週試すことを見つけるリーダーシップのセルフチェック。" />
+<meta name="description" content="70問で、任せ方・意見の聞き方・育て方を振り返る。あなたの持ち味、空回りしやすい場面、持ち味を活かす方法を見つけるリーダーシップのセルフチェック。" />
 <meta name="color-scheme" content="dark" />
 <title>リーダーの強みと落とし穴 — Leadership Derailer 70</title>
-<link rel="stylesheet" href="./styles.css?v=2.6.1" />
+<link rel="stylesheet" href="./styles.css?v=2.7.0" />
 <link rel="icon" href="./favicon.svg" type="image/svg+xml" />
 </head>
 <body>
@@ -19,20 +19,17 @@
   </div>
   <section class="card start-card" aria-labelledby="startTitle">
     <h2 id="startTitle">わかるのは、持ち味と次の一歩。</h2>
-    <p>あなたの行動から「持ち味」「空回りしやすい場面」「今週試すこと1つ」を整理します。はじめて部下を持つ方、任せ方や育て方を見直したい方の振り返りに。</p>
+    <p>あなたの行動から「持ち味」「空回りしやすい場面」「持ち味を活かすアドバイス」を整理します。はじめて部下を持つ方、任せ方や育て方を見直したい方の振り返りに。</p>
     <p class="note">理想の自分ではなく、最近の仕事で実際に取った行動を思い浮かべてください。迷った場合は、より近い回答を選んでください。</p>
-    <details class="optional-profile"><summary>表示名・MBTIを追加する（任意）</summary>
-      <div class="formrow"><label class="field">表示名（任意）<input id="nameInput" type="text" maxlength="80" autocomplete="off" placeholder="例：K.M." /></label><label class="field">MBTI（任意）<select id="mbtiInput"><option value="">選択しない</option><option>ENTP</option><option>ENTJ</option><option>INTP</option><option>INTJ</option><option>ENFP</option><option>ENFJ</option><option>INFP</option><option>INFJ</option><option>ESTP</option><option>ESTJ</option><option>ISTP</option><option>ISTJ</option><option>ESFP</option><option>ESFJ</option><option>ISFP</option><option>ISFJ</option></select></label></div>
-      <p class="note">知っている場合だけ選んでください。行動得点と照らし合わせる補足の解説に使います。結果画面でも変更できます。</p>
-    </details>
+    <label class="field name-field">表示名（任意）<input id="nameInput" type="text" maxlength="80" autocomplete="off" placeholder="例：K.M." /></label>
     <p id="savedNotice" class="note" aria-live="polite"></p>
-    <div class="actions"><button id="startBtn" class="primary" type="button">70問を始める</button><button id="resumeResultBtn" class="secondary hidden" type="button">保存した結果と振り返りを見る</button></div>
-    <p class="note privacy-note">回答・表示名・MBTI・取り組みの記録は、このブラウザ内に保存します。入力内容をサーバーへ送信する機能はありません。</p>
+    <div class="actions"><button id="startBtn" class="primary" type="button">70問を始める</button><button id="resumeResultBtn" class="secondary hidden" type="button">保存した結果を見る</button></div>
+    <p class="note privacy-note">回答・表示名は、このブラウザ内に保存します。入力内容をサーバーへ送信する機能はありません。</p>
   </section>
   <details class="disclosure intro-method"><summary>このセルフチェックについて</summary><div class="disclosure-body">
     <p class="note">仕事での行動を振り返るための、独自設問によるセルフチェックです。能力や人柄の優劣を判定するものではありません。</p>
     <p class="note">Hogan Development Survey（HDS）で扱われる11のderailer概念を参考にしていますが、公式HDSの設問・ノルム・パーセンタイル・リスク区分を再現していません。Hogan Assessmentsとの提携・承認を示すものではなく、採用・昇進・医療の判断には使用できません。</p>
-    <p class="note">70問は診断ごとにランダムに並び、途中再開では同じ順番を保ちます。MBTIを選んでも採点やタイプ判定は変わりません。端末やブラウザを変えると記録は引き継がれません。共有端末では、利用後にブラウザのサイトデータを削除してください。</p>
+    <p class="note">70問は診断ごとにランダムに並び、途中再開では同じ順番を保ちます。端末やブラウザを変えると記録は引き継がれません。共有端末では、利用後にブラウザのサイトデータを削除してください。</p>
   </div></details>
 </main></section>
 <section id="quiz" class="hidden"><div class="progress-shell"><div class="wrap"><div class="progress-row"><span id="progressText">0 / 70</span><span id="phaseText">回答は自動保存されます</span></div><div class="progress" id="quizProgress" role="progressbar" aria-label="回答の進捗" aria-valuemin="0" aria-valuemax="70" aria-valuenow="0"><div id="progressBar"></div></div></div></div><main class="wrap quizwrap"><p class="note quiz-instructions">各設問につき、5つの選択肢から1つ選んでください。回答は自動保存され、後から変更できます。全70問をランダムに並べています。途中から再開・見直しをする場合は、同じ順番を保ちます。</p><div id="questions"></div><div class="actions no-print"><button id="showResultsBtn" class="primary" type="button">結果を見る</button><button id="quizResetBtn" class="secondary" type="button">回答をリセット</button></div><p id="incomplete" class="note" role="alert"></p></main></section>
@@ -40,7 +37,7 @@
 <section id="results" class="hidden"><main class="wrap">
   <header class="result-hero"><div class="eyebrow">あなたのリーダーシップ</div><div id="resultIdentity" class="note">SELF REPORT</div><h1 id="summaryTitle" tabindex="-1">今回の回答から見える関わり方</h1><p class="note">70問の回答から整理した、今のあなたの傾向です。実際の仕事に当てはまる部分を拾ってください。</p></header>
   <div id="briefCards" class="brief-grid" aria-label="結果の要約"></div>
-  <div class="actions no-print"><a class="button-link primary" href="#practicePanel">今週試す場面を決める</a><button id="copySummaryBtn" class="secondary" type="button">結果サマリーをコピー</button></div>
+  <div class="actions no-print"><button id="copySummaryBtn" class="primary" type="button">結果サマリーをコピー</button></div>
 
   <section class="guide-section" aria-labelledby="readingTitle">
     <h2 id="readingTitle" class="section-title">まず、この結果をどう読むか</h2>
@@ -53,41 +50,6 @@
       </div></details>
     </div>
   </section>
-  <section id="mbtiSection" class="mbti-section" aria-labelledby="mbtiSectionTitle">
-    <details class="disclosure"><summary><span id="mbtiSectionTitle">MBTIと行動得点を組み合わせて読む</span><span class="disclosure-hint">任意の補足</span></summary>
-      <div class="disclosure-body"><p class="note">MBTIは、行動を振り返るための別の視点です。上の要約と得点は70問の回答から作っています。</p>
-        <div class="mbti-controls no-print"><label class="field">解説に使うMBTI（任意）<select id="resultMbtiInput"><option value="">選択しない</option><option>ENTP</option><option>ENTJ</option><option>INTP</option><option>INTJ</option><option>ENFP</option><option>ENFJ</option><option>INFP</option><option>INFJ</option><option>ESTP</option><option>ESTJ</option><option>ISTP</option><option>ISTJ</option><option>ESFP</option><option>ESFJ</option><option>ISFP</option><option>ISFJ</option></select></label><p class="note">選択すると、4つの選好と実際の行動得点を照らし合わせた解説が表示されます。</p></div>
-        <div id="mbtiDetails" class="mbti-details hidden" aria-label="MBTIと行動得点を組み合わせた解説"></div>
-      </div>
-    </details>
-  </section>
-
-  <section id="practicePanel" class="practice-panel" aria-labelledby="practiceTitle">
-    <h2 id="practiceTitle" class="section-title">今週の1つを、仕事で試す</h2>
-    <p class="note">まず1つの場面で試し、週1回、4週間振り返ります。得点を上げることより、相手の反応や仕事の進み方の変化を見てみましょう。</p>
-    <div class="card">
-      <label class="field">試す行動を1つ選ぶ<select id="practiceAction"></select></label>
-      <p id="practiceActionCopy" class="practice-action-copy"></p>
-      <div class="formrow">
-        <label class="field">どの場面で試す？<textarea id="practiceContext" rows="3" maxlength="240" placeholder="例：水曜の定例で、新しい仕事をメンバーに任せるとき"></textarea></label>
-        <label class="field">何が変わったか、何を見る？<textarea id="practiceSignal" rows="3" maxlength="240" placeholder="例：私が答える前に、本人から進め方の提案が出たか"></textarea></label>
-      </div>
-      <div class="actions no-print"><button id="savePracticeBtn" class="primary" type="button">この取り組みを保存する</button><button id="clearPracticeBtn" class="ghost hidden" type="button">取り組みの記録を削除</button></div>
-      <p class="note">結果を見直しても、MBTIを変更しても、この記録は残ります。取り組みを変更した場合も、保存済みの振り返りはその時点の内容を保ちます。</p>
-      <div id="reflectionFields" class="reflection-fields hidden">
-        <h3>1週間を振り返る</h3>
-        <div class="formrow"><label class="field">何週目？<select id="practiceWeek"><option value="1">1週目</option><option value="2">2週目</option><option value="3">3週目</option><option value="4">4週目</option></select></label>
-        <label class="field">今週、試せた？<select id="practiceOutcome"><option value="">選んでください</option><option value="tried">試せた</option><option value="not-yet">機会はあったが、まだ試せていない</option><option value="no-opportunity">試す場面がなかった</option></select></label></div>
-        <p id="practiceReviewDate" class="note"></p>
-        <p id="reflectionContext" class="note"></p>
-        <label class="field">起きたこと・相手の反応・次に変えること（任意）<textarea id="practiceNote" rows="3" maxlength="800" placeholder="例：本人から2案出た。次は、提案を待つ時間を先に伝える。"></textarea></label>
-        <div class="actions no-print"><button id="saveReflectionBtn" class="secondary" type="button">振り返りを保存する</button></div>
-      </div>
-      <p id="practiceStatus" class="note" role="status" aria-live="polite"></p>
-      <div id="practiceHistory" aria-label="保存した振り返り"></div>
-    </div>
-  </section>
-
   <div class="detail-stack">
     <details class="disclosure"><summary>あなたのリーダー像を、詳しく読む<span class="disclosure-hint">5つの仕事の場面から</span></summary><div class="disclosure-body">
       <p id="summaryCopy" class="muted"></p>
@@ -105,17 +67,13 @@
 <h2 class="section-title">11の傾向を詳しく見る</h2><div class="card"><div id="factors"></div></div>
 
     </div></details>
-    <details class="disclosure"><summary>ほかの行動の候補を読む<span class="disclosure-hint">自分の場面に合うものを探す</span></summary><div class="disclosure-body">
-      <p class="note">目立つ傾向と支援行動から選んだ候補です。全部に取り組む必要はありません。</p><div class="development" id="development"></div>
-    </div></details>
+
   </div>
   <div class="actions no-print"><button id="downloadJsonBtn" class="secondary" type="button">結果データを保存</button><button id="printBtn" class="secondary" type="button">印刷 / PDF保存</button><button id="backBtn" class="ghost" type="button">回答を見直す</button><button id="resultResetBtn" class="ghost" type="button">回答をリセット</button></div>
-  <p class="note">コピー・データ保存には詳しい解説と取り組みの記録も含まれます。印刷は開いている項目が対象です。回答のリセットでは、取り組みの記録は消えません。</p>
+  <p class="note">コピー・データ保存には3項目の解説とアドバイス、詳しい結果が含まれます。印刷は開いている項目が対象です。</p>
 </main><footer class="wrap">リーダーの強みと落とし穴 / Leadership Derailer 70<br />独自設問による振り返りツールです。公式HDSではなく、採用・昇進の判定には使用できません。</footer></section>
 <div id="toast" class="toast hidden" role="status" aria-live="polite"></div>
-<script src="./mbti.js?v=2.6.1" defer></script>
-<script src="./profile.js?v=2.6.1" defer></script>
-<script src="./brief.js?v=2.6.1" defer></script>
-<script src="./practice.js?v=2.6.1" defer></script>
-<script src="./app.js?v=2.6.1" defer></script>
+<script src="./profile.js?v=2.7.0" defer></script>
+<script src="./brief.js?v=2.7.0" defer></script>
+<script src="./app.js?v=2.7.0" defer></script>
 </body></html>

@@ -32,10 +32,8 @@ function load(initialStorage = {}, blockedStorage = false) {
     removeItem(k) { if (blockedStorage) throw Error('blocked'); storage.delete(k); }
   };
   const context = vm.createContext({ document, window: {localStorage, scrollTo() {}}, location: {hash: ''}, confirm: () => true, setTimeout() {}, console, Blob, URL:{createObjectURL(blob){downloadBlobs.push(blob);return 'blob:test';},revokeObjectURL(){}} });
-  vm.runInContext(fs.readFileSync(path.join(__dirname, 'mbti.js'), 'utf8'), context);
   vm.runInContext(fs.readFileSync(path.join(__dirname, 'profile.js'), 'utf8'), context);
   vm.runInContext(fs.readFileSync(path.join(__dirname, 'brief.js'), 'utf8'), context);
-  vm.runInContext(fs.readFileSync(path.join(__dirname, 'practice.js'), 'utf8'), context);
   vm.runInContext(fs.readFileSync(path.join(__dirname, 'app.js'), 'utf8'), context);
   return { run: script => vm.runInContext(script, context), storage, document, downloadBlobs };
 }
@@ -145,7 +143,7 @@ test('order changes do not alter scoring and neutral results acknowledge ties', 
   assert.match(app.document.getElementById('summaryCopy').textContent,/すべて同じ得点/);
   assert.match(app.document.getElementById('types').innerHTML,/類似度/);
   assert.doesNotMatch(app.document.getElementById('types').innerHTML,/% fit/);
-  assert.match(app.document.getElementById('development').innerHTML,/11項目が同点/);
+  assert.match(app.run('buildLeadershipBrief(calc()).strength.body'),/1つの強いリーダー像に絞れません/);
 });
 
 function report(app) { return JSON.parse(JSON.stringify(app.run('buildLeadershipProfile(calc())'))); }
@@ -210,127 +208,11 @@ test('neutral and endpoint profiles are complete, finite and do not invent ranks
     assert.ok(result.sections.flatMap(s=>s.scores).every(s=>s.value===Number(high)*100));
   }
 });
-test('MBTI changes the displayed and copied explanation but preserves the base score narrative', () => {
-  const app=load();fill(app,3);
-  const before=JSON.stringify(report(app).sections);
-  const copied=[];
-  for(const mbti of ['ENTP','ISFJ','']){
-    app.run(`profile.mbti=${JSON.stringify(mbti)};renderResults(calc())`);
-    const full=app.run('buildLeadershipProfile(calc(),profile.mbti)');
-    const copy=app.run('buildSummary()');copied.push(copy);
-    assert.equal(JSON.stringify(full.sections),before);
-    assert.equal(app.document.getElementById('summaryCopy').textContent,full.lead);
-    assert.equal(app.document.getElementById('summaryDetails').children.length,5);
-    assert.match(copy,/判断と、意見の受け止め方/);
-    assert.equal(app.document.getElementById('mbtiDetails').classList.contains('hidden'),!mbti);
-    if(mbti){
-      assert.equal(app.document.getElementById('resultMbtiInput').value,mbti);
-      assert.equal(app.document.getElementById('mbtiDetails').children.length,8);
-      for(const part of full.mbti.sections)assert.ok(copy.includes(part.body));
-    }else{
-      assert.equal(full.mbti,null);
-      assert.equal(app.document.getElementById('mbtiDetails').children.length,0);
-      assert.doesNotMatch(copy,/今回の行動得点|MBTIだけで/);
-    }
-  }
-  assert.equal(new Set(copied).size,3);
-});
 test('high autonomy with low coaching is not summarized as holding decisions', () => {
   const app=load();fill(app,3);
   app.run('sample=calc();sample.impacts.standards.index=90;sample.impacts.autonomy.index=90;sample.impacts.coaching.index=20');
   assert.match(app.run('buildLeadershipProfile(sample).lead'),/裁量を渡しつつ/);
   assert.doesNotMatch(app.run('buildLeadershipProfile(sample).lead'),/重要な判断は自分で持つ/);
-});
-
-test('all 16 MBTI types produce four distinct preference explanations with identical scoring', () => {
-  const app=load();fill(app,5);
-  const scores=JSON.stringify(app.run('calc()'));
-  const reports=new Map();
-  for(const type of app.run('mbtiValues')){
-    app.run(`profile.mbti=${JSON.stringify(type)}`);
-    const result=app.run('buildLeadershipProfile(calc(),profile.mbti)');
-    assert.equal(result.mbti.type,type);
-    assert.equal(result.mbti.sections.length,4);
-    assert.ok(result.mbti.sections.every(s=>s.body.length>100&&s.scores.every(x=>Number.isFinite(x.value))));
-    assert.doesNotMatch(result.lead+result.mbti.sections.map(s=>s.body).join(''),/undefined|NaN/);
-    assert.equal(JSON.stringify(app.run('calc()')),scores);
-    reports.set(type,result.mbti);
-  }
-  // Each changed preference must change prose, not just a type name or label.
-  const base=reports.get('ENTP');
-  for(const [type,index] of [['INTP',0],['ESTP',1],['ENFP',2],['ENTJ',3]]){
-    assert.notEqual(base.sections[index].body,reports.get(type).sections[index].body);
-  }
-});
-
-test('the same MBTI gets different prose as actual behavior combinations change', () => {
-  const app=load();fill(app,3);
-  app.run('sample=calc();sample.factors.imaginative.index=90;sample.factors.skeptical.index=95;sample.impacts.selfcorrect.index=90;sample.factors.diligent.index=90;sample.impacts.autonomy.index=90');
-  const first=app.run('buildMBTIContext(sample,"ENTP")');
-  assert.match(first.sections[2].body,/根拠のある指摘は自分の判断にも反映/);
-  assert.match(first.sections[3].body,/複数の余地を残して任せる/);
-  app.run('sample.factors.imaginative.index=20;sample.impacts.selfcorrect.index=20;sample.impacts.autonomy.index=20');
-  const second=app.run('buildMBTIContext(sample,"ENTP")');
-  assert.notEqual(first.lead,second.lead);
-  assert.match(second.sections[1].body,/発想の飛躍の回答は少なめ/);
-  assert.match(second.sections[2].body,/自分の判断を変える条件が対称/);
-  assert.match(second.sections[3].body,/メンバーの方法は細かく確認/);
-});
-
-test('MBTI preference letters do not override contradictory actual behavior', () => {
-  const app=load();fill(app,3);
-  app.run('sample=calc();sample.factors.reserved.index=20;sample.factors.imaginative.index=90;sample.impacts.safety.index=90');
-  const introvert=app.run('buildMBTIContext(sample,"ISTJ")');
-  assert.match(introvert.sections[0].body,/Iだから距離を置く/);
-  assert.match(introvert.sections[1].body,/Sだから新しい案を出さない/);
-  assert.match(introvert.sections[2].body,/筋道を重視しながら異論を聞く/);
-  app.run('sample.impacts.safety.index=20');
-  assert.match(app.run('buildMBTIContext(sample,"ISFJ").sections[2].body'),/人への配慮を意識していても/);
-});
-
-test('unselected and invalid MBTI fall back to behavior-only results', () => {
-  const app=load();fill(app,3);
-  const base=JSON.stringify(app.run('buildLeadershipProfile(calc())'));
-  for(const invalid of ['',null,undefined,123,'ENTP-A','enfp','ESTX','<script>']){
-    const js=invalid===undefined?'undefined':JSON.stringify(invalid);
-    assert.equal(app.run(`buildMBTIContext(calc(),${js})`),null);
-    assert.equal(JSON.stringify(app.run(`buildLeadershipProfile(calc(),${js})`)),base);
-  }
-  assert.equal(load({'derailer70MBTI':'invalid'}).run('profile.mbti'),'');
-  assert.match(app.run('buildLeadershipProfile(calc(),"ENTP").lead'),/MBTIだけでリーダー像を補って断定せず/);
-});
-
-test('changing MBTI persists without changing existing answers, question order or result scores', () => {
-  const saved=Object.fromEntries(Array.from({length:70},(_,id)=>[id,(id*7)%5+1]));
-  const app=load({'derailer70Answers':JSON.stringify(saved)});
-  app.run('renderQuestions();renderResults(calc())');
-  const order=app.run('JSON.stringify(ensureQuestionOrder())');
-  const results=JSON.stringify(app.run('window._latest'));
-  app.run('updateMBTI("ENTP")');
-  assert.equal(app.storage.get('derailer70MBTI'),'ENTP');
-  assert.equal(app.document.getElementById('mbtiInput').value,'ENTP');
-  assert.equal(app.document.getElementById('resultMbtiInput').value,'ENTP');
-  assert.equal(JSON.stringify(app.run('window._latest')),results);
-  assert.equal(app.run('JSON.stringify(ensureQuestionOrder())'),order);
-  assert.equal(app.storage.get('derailer70Answers'),JSON.stringify(saved));
-  const resumed=load(Object.fromEntries(app.storage));
-  assert.equal(resumed.run('profile.mbti'),'ENTP');
-  assert.equal(JSON.stringify(resumed.run('calc()')),results);
-  app.run('updateMBTI("not a type")');
-  assert.equal(app.storage.get('derailer70MBTI'),'');
-  assert.equal(app.document.getElementById('mbtiDetails').classList.contains('hidden'),true);
-});
-
-test('JSON export contains the selected MBTI, the exact displayed explanation and original scores', async () => {
-  const app=load();fill(app,5);
-  app.run('renderResults(calc());updateMBTI("ENTP");downloadJSON()');
-  const data=JSON.parse(await app.downloadBlobs[0].text());
-  assert.equal(data.version,'Leadership Derailer 70 v2.6');
-  assert.equal(data.profile.mbti,'ENTP');
-  assert.deepEqual(data.leadershipSummary,JSON.parse(JSON.stringify(app.run('buildLeadershipProfile(window._latest,profile.mbti)'))));
-  assert.equal(data.leadershipSummary.lead,app.document.getElementById('summaryCopy').textContent);
-  assert.deepEqual(data.results,JSON.parse(JSON.stringify(app.run('calc()'))));
-  assert.equal(Object.keys(data.answers).length,70);
 });
 
 test('the short reading changes its meaning and action when the score combination changes', () => {
@@ -350,106 +232,54 @@ test('the short reading changes its meaning and action when the score combinatio
   assert.equal(delegation.action.key,'coaching');
 });
 
-test('short readings acknowledge neutral profiles and relative differences without changing scores', () => {
-  const app=load();fill(app,3);
-  const neutral=app.run('buildLeadershipBrief(calc())');
-  assert.match(neutral.strength.body,/1つの強いリーダー像に絞れません/);
-  assert.match(neutral.watch.body,/特定の落とし穴を強く決めつける必要はありません/);
-  app.run('sample=calc();sample.impacts.safety.index=95;sample.impacts.selfcorrect.index=95;sample.impacts.autonomy.index=65;sample.impacts.coaching.index=65');
-  assert.match(app.run('buildLeadershipBrief(sample).watch.body'),/苦手という判定ではありません/);
-  const scores=JSON.stringify(app.run('calc()'));
-  app.run('renderResults(calc());updateMBTI("ENTP")');
-  const first=JSON.stringify(app.run('buildLeadershipBrief(window._latest)'));
-  app.run('updateMBTI("ISFJ")');
-  assert.equal(JSON.stringify(app.run('buildLeadershipBrief(window._latest)')),first);
-  assert.equal(JSON.stringify(app.run('calc()')),scores);
+test('expanded explanations and advice follow individual score combinations', () => {
+ const app=load();fill(app,3);
+ app.run('sample=calc();sample.factors.skeptical.index=95;sample.impacts.selfcorrect.index=92;sample.factors.imaginative.index=85;sample.factors.diligent.index=75;sample.impacts.standards.index=92;sample.impacts.safety.index=92;sample.impacts.autonomy.index=67;sample.impacts.coaching.index=67');
+ const first=app.run('buildLeadershipBrief(sample)');
+ assert.match(first.strength.paragraphs[0].text,/新しい構想.*細部/);
+ assert.match(first.watch.body,/苦手という判定ではありません/);
+ assert.equal(first.action.key,'autonomy');
+ assert.match(first.action.body,/高基準・精密さ75と自走支援67/);
+ app.run('sample.impacts.autonomy.index=95;sample.impacts.coaching.index=20');
+ const second=app.run('buildLeadershipBrief(sample)');
+ assert.equal(second.action.key,'coaching');
+ assert.match(second.strength.paragraphs[1].text,/裁量を渡しやすく/);
+ assert.match(second.action.body,/すでに渡している裁量/);
+ assert.notEqual(first.action.paragraphs[0].text,second.action.paragraphs[0].text);
 });
 
-test('practice plans and weekly records survive reload, MBTI changes and answer resets', () => {
-  const app=load();fill(app,3);app.run('renderResults(calc())');
-  app.document.getElementById('practiceContext').value='水曜の定例';
-  app.document.getElementById('practiceSignal').value='本人から案が出たか';
-  app.run('savePractice()');
-  app.document.getElementById('practiceOutcome').value='tried';
-  app.document.getElementById('practiceNote').value='2案出た';
-  app.run('savePracticeReflection()');
-  const saved=app.storage.get('derailer70Practice');
-  app.document.getElementById('practiceNote').value='まだ保存していないメモ';
-  app.document.getElementById('practiceContext').value='入力途中の別の場面';
-  app.run('updateMBTI("ENTP")');
-  assert.equal(app.document.getElementById('practiceNote').value,'まだ保存していないメモ');
-  assert.equal(app.document.getElementById('practiceContext').value,'入力途中の別の場面');
-  assert.equal(app.storage.get('derailer70Practice'),saved);
-  app.run('resetQuiz()');
-  assert.equal(app.storage.get('derailer70Practice'),saved);
-  const reload=load(Object.fromEntries(app.storage));fill(reload,3);reload.run('renderResults(calc())');
-  assert.equal(reload.document.getElementById('practiceContext').value,'水曜の定例');
-  assert.equal(reload.run('practicePlan.reflections[0].note'),'2案出た');
-  assert.equal(reload.run('practicePlan.reflections[0].week'),1);
-});
-
-test('practice edits preserve earlier action snapshots and prevent unsaved mismatches', () => {
-  const app=load();fill(app,3);app.run('renderResults(calc())');
-  app.document.getElementById('practiceContext').value='定例';
-  app.document.getElementById('practiceSignal').value='本人の提案';
-  app.run('savePractice()');
-  app.document.getElementById('practiceOutcome').value='tried';
-  app.run('savePracticeReflection()');
-  const title=app.run('practicePlan.reflections[0].actionTitle');
-  app.document.getElementById('practiceAction').value='selfcorrect';
-  app.document.getElementById('practiceWeek').value='2';
-  app.run('savePracticeReflection()');
-  assert.equal(app.run('practicePlan.reflections.length'),1);
-  assert.match(app.document.getElementById('practiceStatus').textContent,/先に/);
-  app.run('savePractice();savePracticeReflection()');
-  assert.equal(app.run('practicePlan.reflections[0].actionTitle'),title);
-  assert.equal(app.run('practicePlan.reflections[1].actionTitle'),'判断ログ');
-  app.document.getElementById('practiceNote').value='同じ週の追記';
-  app.run('savePracticeReflection()');
-  assert.equal(app.run('practicePlan.reflections.length'),2);
-  assert.equal(app.run('practicePlan.reflections[1].note'),'同じ週の追記');
-  app.document.getElementById('practiceWeek').value='1';
-  app.run('populatePracticeReflection();savePracticeReflection()');
-  assert.equal(app.run('practicePlan.reflections[0].actionTitle'),title);
-});
-
-test('invalid practice data is bounded and rejected without breaking the questionnaire', () => {
-  for(const data of ['null','{invalid','[]','{"version":2}','{"version":1,"actionKey":"__proto__"}']){
-    const app=load({'derailer70Practice':data});assert.equal(app.run('practicePlan'),null);
-    fill(app,3);app.run('renderResults(calc())');assert.equal(app.run('calc().multiplier'),50);
+test('all-neutral and endpoint summaries remain complete and safe to copy', () => {
+ const app=load();
+ for(const mode of ['neutral','low','high']){
+  if(mode==='neutral')fill(app,3);
+  else app.run(`answers=Object.fromEntries([...derailerQuestions,...impactQuestions].map((q,id)=>[id,q[2]===-1?${mode==='high'?1:5}:${mode==='high'?5:1}]))`);
+  app.run('renderResults(calc())');
+  const brief=app.run('buildLeadershipBrief(calc())');
+  for(const p of [brief.strength,brief.watch,brief.action]){
+   assert.ok(p.body.length>30);
+   assert.ok(p.paragraphs.length>=1);
+   assert.ok(p.paragraphs.every(x=>x.text.length>30));
   }
-  const data={version:1,actionKey:'autonomy',context:'x'.repeat(500),signal:'本人の提案',startedAt:'2026-10-04T09:00:00.000Z',reflections:[
-    {week:1,outcome:'tried',note:'x'.repeat(1000),savedAt:'2026-10-11T09:00:00.000Z'},
-    {week:1,outcome:'tried',savedAt:'2026-10-11T09:00:00.000Z'},
-    {week:5,outcome:'tried',savedAt:'2026-10-11T09:00:00.000Z'},
-    {week:2,outcome:'invalid',savedAt:'2026-10-11T09:00:00.000Z'}]};
-  const app=load({'derailer70Practice':JSON.stringify(data)});
-  assert.equal(app.run('practicePlan.context.length'),240);
-  assert.equal(app.run('practicePlan.reflections.length'),1);
-  assert.equal(app.run('practicePlan.reflections[0].note.length'),800);
-  assert.equal(app.run('practiceReviewDate(practicePlan,1)'),'2026-10-11T09:00:00.000Z');
+  const copied=app.run('buildSummary()');
+  assert.doesNotMatch(copied,/undefined|NaN|MBTI|今週の1つを、仕事で試す/);
+  assert.match(copied,/実際の仕事では、こう伝える/);
+  if(mode==='neutral')assert.match(brief.action.body,/特定の弱点を選べない/);
+ }
 });
 
-test('blocked practice storage reports failure and export still retains the in-memory record', async () => {
-  const app=load({},true);fill(app,3);app.run('renderResults(calc())');
-  app.document.getElementById('practiceContext').value='定例';
-  app.document.getElementById('practiceSignal').value='発言の変化';
-  app.run('savePractice();downloadJSON()');
-  assert.match(app.document.getElementById('practiceStatus').textContent,/保存できません/);
-  const data=JSON.parse(await app.downloadBlobs[0].text());
-  assert.equal(data.practice.context,'定例');
-  assert.equal(data.brief.strength.title,app.run('buildLeadershipBrief(calc()).strength.title'));
-  assert.match(app.run('buildSummary()'),/試す場面：定例/);
-});
-
-test('clearing practice removes only the journal and keeps the answers, order and MBTI', () => {
-  const app=load();fill(app,3);app.run('renderQuestions();renderResults(calc());updateMBTI("ENTP")');
-  const before=app.run('JSON.stringify({answers,questionOrder,profile,results:window._latest})');
-  app.document.getElementById('practiceContext').value='定例';
-  app.document.getElementById('practiceSignal').value='本人の案';
-  app.run('savePractice();clearPractice()');
-  assert.equal(app.storage.has('derailer70Practice'),false);
-  assert.equal(app.run('practicePlan'),null);
-  assert.equal(app.document.getElementById('practiceContext').value,'');
-  assert.equal(app.run('JSON.stringify({answers,questionOrder,profile,results:window._latest})'),before);
+test('legacy optional data is ignored while saved 70 answers and order still resume', async () => {
+ const answers=Object.fromEntries(Array.from({length:70},(_,id)=>[id,(id*7)%5+1]));
+ const order=Array.from({length:70},(_,i)=>69-i);
+ const app=load({derailer70Answers:JSON.stringify(answers),derailer70Order:JSON.stringify(order),derailer70MBTI:'ENTP',derailer70Practice:'{"private":"old journal"}',derailer70Name:'確認例'});
+ app.run('renderQuestions();renderResults(calc());downloadJSON()');
+ assert.equal(app.run('QUESTION_COUNT-missingAnswers().length'),70);
+ assert.deepEqual(JSON.parse(app.run('JSON.stringify(ensureQuestionOrder())')),order);
+ const data=JSON.parse(await app.downloadBlobs[0].text());
+ assert.deepEqual(data.profile,{name:'確認例'});
+ assert.deepEqual(data.answers,answers);
+ assert.equal(data.version,'Leadership Derailer 70 v2.7');
+ assert.equal('practice' in data,false);
+ assert.equal('mbti' in data.leadershipSummary,false);
+ assert.equal(data.brief.action.paragraphs.length,2);
+ assert.doesNotMatch(app.run('buildSummary()'),/ENTP|MBTI|old journal/);
 });

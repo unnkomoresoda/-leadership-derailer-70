@@ -1,6 +1,6 @@
 {
   "name": "leadership-derailer-70",
-  "version": "2.6.1",
+  "version": "2.7.0",
   "private": true,
   "description": "Non-official, 70-question leadership self-screening",
   "scripts": { "test": "node --test scoring.test.cjs" },
