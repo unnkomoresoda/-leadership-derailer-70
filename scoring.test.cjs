@@ -308,6 +308,15 @@ test('every catalog type has complete, individually written mechanisms and worki
  assert.equal(app.run('LEADERSHIP_TYPES.every(t=>[t.cooperate,t.friction].every(s=>LEADERSHIP_TYPES.some(other=>other.id!==t.id&&s.includes(other.jp))))'),true);
  assert.equal(app.run('LEADERSHIP_BASES.every(b=>LEADERSHIP_TYPES.filter(t=>t.a===b.index||t.b===b.index).length===7)'),true);
 });
+test('all 28 catalog pitfalls use plain Japanese in headings and descriptions',()=>{
+ const app=load();
+ assert.equal(app.run('LEADERSHIP_TYPES.every(t=>t.derailer.startsWith("最も気をつけたい落とし穴は、"))'),true);
+ const catalogSource=fs.readFileSync(path.join(__dirname,'type-catalog.js'),'utf8');
+ const rendererSource=fs.readFileSync(path.join(__dirname,'types.js'),'utf8');
+ assert.doesNotMatch(catalogSource,/最大のDerailer候補/);
+ assert.doesNotMatch(rendererSource,/最大のDerailer候補/);
+ assert.match(rendererSource,/\['derailer','最も気をつけたい落とし穴'\]/);
+});
 test('individual highlights depend on score relationships, not the fixed type',()=>{
  const app=load();fill(app,3);
  const result=app.run('calc()');
