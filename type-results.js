@@ -42,6 +42,7 @@ function renderTypeLayers(r){
  document.getElementById('typeBases').textContent=type.bases.map(x=>x.jp).join(' × ');
  document.getElementById('typeCatch').textContent=type.theme;
  const link=document.getElementById('typeDetailLink');link.href=`./types.html#${type.id}`;link.textContent=`${type.jp}を詳しく見る →`;
+ document.getElementById('xShareLink').href=buildXShareURL(type);
  const boundary=r.typeScores[1].fit-r.typeScores[2].fit;
  document.getElementById('typeBasisNote').textContent=`Primary：${type.primary.jp}（類似度 ${type.primary.fit}/100）／Secondary：${type.secondary.jp}（${type.secondary.fit}/100）。${type.gap<4||boundary<4?'上位の差が小さく、別の組み合わせにも近い回答です。同点は元データの順で表示します。':'これは回答が近いリーダー像で、固定した性格分類ではありません。'}類似度は所属確率・偏差値ではありません。`;
  const contexts=document.getElementById('personalContexts');contexts.innerHTML='';
@@ -49,6 +50,11 @@ function renderTypeLayers(r){
  const root=document.getElementById('personalHighlights');root.innerHTML='';
  [['あなたの最大の武器',highlights.weapon],['あなたの最大のリスク',highlights.risk]].forEach(([label,part])=>{const card=document.createElement('section');card.className='card highlight-card';const k=document.createElement('div');k.className='kicker';k.textContent=label;card.appendChild(k);const h=document.createElement('h3');h.textContent=part.title;card.appendChild(h);const p=document.createElement('p');p.textContent=part.body;card.appendChild(p);appendScoreEvidence(card,part.scores);root.appendChild(card)});
  return {type,highlights};
+}
+function buildXShareURL(type){
+ const message=`私のリーダータイプは「${type.jp}」。70問のセルフチェックで、仕事での関わり方を振り返りました。`;
+ const site='https://unnkomoresoda.github.io/-leadership-derailer-70/';
+ return `https://twitter.com/intent/tweet?text=${encodeURIComponent(message)}&url=${encodeURIComponent(site)}`;
 }
 function combinationResultText(r){
  const type=getCombinationType(r.typeScores),p=buildPersonalHighlights(r),text=x=>`${x.title}\n${x.body}\n${x.scores.map(s=>`${s.label} ${s.value}/100`).join(' × ')}`;

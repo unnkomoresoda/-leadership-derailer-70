@@ -337,6 +337,13 @@ test('result title is the 28-type name and copy/JSON retain original and new lay
  const type=app.run('getCombinationType(calc().typeScores)');
  assert.equal(app.document.getElementById('summaryTitle').textContent,type.jp);
  assert.equal(app.document.getElementById('typeDetailLink').href,`./types.html#${type.id}`);
+ const shareURL=new URL(app.document.getElementById('xShareLink').href);
+ assert.equal(shareURL.origin,'https://twitter.com');
+ assert.equal(shareURL.pathname,'/intent/tweet');
+ assert.ok(shareURL.searchParams.get('text').includes(type.jp));
+ assert.equal(shareURL.searchParams.get('url'),'https://unnkomoresoda.github.io/-leadership-derailer-70/');
+ assert.ok(!shareURL.href.includes('確認例'));
+ assert.ok(!shareURL.href.includes('50%2F100'));
  const copy=app.run('buildSummary()');assert.ok(copy.includes('あなたの場合'));assert.ok(copy.includes(type.jp));assert.ok(copy.includes('最大のリスク'));assert.ok(copy.includes('負荷が高いときの、周囲への伝わり方'));
  const payload=JSON.parse(await app.downloadBlobs[0].text());
  assert.equal(payload.combinationType.id,type.id);assert.equal(Object.keys(payload.results.factors).length,11);assert.equal(Object.keys(payload.results.impacts).length,5);assert.equal(payload.leadershipSummary.sections.length,5);assert.equal(Object.keys(payload.answers).length,70);

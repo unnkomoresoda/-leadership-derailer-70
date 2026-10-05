@@ -15,7 +15,7 @@
 <meta name="description" content="70問で、任せ方・意見の聞き方・育て方を振り返る。あなたの持ち味、空回りしやすい場面、持ち味を活かす方法を見つけるリーダーシップのセルフチェック。" />
 <meta name="color-scheme" content="dark" />
 <title>リーダーの強みと落とし穴 — Leadership Derailer 70</title>
-<link rel="stylesheet" href="./styles.css?v=2.8.0" />
+<link rel="stylesheet" href="./styles.css?v=2.9.0" />
 <link rel="icon" href="./favicon.svg" type="image/svg+xml" />
 </head>
 <body>
@@ -46,7 +46,7 @@
 <section id="quiz" class="hidden"><div class="progress-shell"><div class="wrap"><div class="progress-row"><span id="progressText">0 / 70</span><span id="phaseText">回答は自動保存されます</span></div><div class="progress" id="quizProgress" role="progressbar" aria-label="回答の進捗" aria-valuemin="0" aria-valuemax="70" aria-valuenow="0"><div id="progressBar"></div></div></div></div><main class="wrap quizwrap"><p class="note quiz-instructions">各設問につき、5つの選択肢から1つ選んでください。回答は自動保存され、後から変更できます。全70問をランダムに並べています。途中から再開・見直しをする場合は、同じ順番を保ちます。</p><div id="questions"></div><div class="actions no-print"><button id="showResultsBtn" class="primary" type="button">結果を見る</button><button id="quizResetBtn" class="secondary" type="button">回答をリセット</button></div><p id="incomplete" class="note" role="alert"></p></main></section>
 
 <section id="results" class="hidden"><main class="wrap">
-  <header class="result-hero combination-hero"><div class="eyebrow">あなたのリーダータイプ</div><div id="resultIdentity" class="note">SELF REPORT</div><h1 id="summaryTitle" tabindex="-1">今回の回答に近いリーダー像</h1><div id="typeEnglish" class="type-english"></div><p id="typeBases" class="type-bases"></p><p id="typeCatch" class="type-catch"></p><div class="actions no-print"><a id="typeDetailLink" class="button-link primary" href="./types.html">このタイプを詳しく見る →</a><a class="text-link" href="./types.html">28タイプ一覧</a></div><details class="type-basis"><summary>タイプの決まり方・類似度を見る</summary><p id="typeBasisNote" class="note"></p><p class="note">8基本プロフィールの上位2つを、順序を区別せず組み合わせます。Primary/Secondaryの順位は保持します。タイプ名は理解を助ける独自の分類であり、標準化された人格診断ではありません。</p></details></header>
+  <header class="result-hero combination-hero"><div class="eyebrow">あなたのリーダータイプ</div><div id="resultIdentity" class="note">SELF REPORT</div><h1 id="summaryTitle" tabindex="-1">今回の回答に近いリーダー像</h1><div id="typeEnglish" class="type-english"></div><p id="typeBases" class="type-bases"></p><p id="typeCatch" class="type-catch"></p><div class="actions no-print"><a id="typeDetailLink" class="button-link primary" href="./types.html">このタイプを詳しく見る →</a><a class="text-link" href="./types.html">28タイプ一覧</a></div><div class="actions result-share-actions no-print"><a id="xShareLink" class="button-link secondary" href="https://twitter.com/intent/tweet" target="_blank" rel="noopener noreferrer" aria-label="Xでリーダータイプをシェア">Xでシェア</a><button id="printBtn" class="secondary" type="button">PDF保存</button></div><p class="note result-share-note no-print">Xにはタイプ名とサイトURLのみを渡します。PDFは印刷画面の送信先で「PDFに保存」を選んでください。</p><details class="type-basis"><summary>タイプの決まり方・類似度を見る</summary><p id="typeBasisNote" class="note"></p><p class="note">8基本プロフィールの上位2つを、順序を区別せず組み合わせます。Primary/Secondaryの順位は保持します。タイプ名は理解を助ける独自の分類であり、標準化された人格診断ではありません。</p></details></header>
   <section class="personal-intro" aria-labelledby="personalTitle"><div class="eyebrow">YOUR INDIVIDUAL PROFILE</div><h2 id="personalTitle">あなたの場合</h2><p class="note">同じ28タイプでも、得点が違えば現れ方は変わります。ここからはタイプの固定文ではなく、70問で回答した行動の得点と、その組み合わせによる個人分析です。得点は自己報告であり、実際の能力・成果を測ったものではありません。</p><div id="personalContexts" class="personal-contexts"></div></section>
   <div id="personalHighlights" class="personal-highlights"></div>
   <p class="note">「最大」は今回の得点から選んだ振り返りの候補です。独自の組み合わせルールであり、問題の発生確率や能力の順位ではありません。得点の差が小さい場合は、一つに決めつけません。</p>
@@ -85,13 +85,13 @@
     </div></details>
 
   </div>
-  <div class="actions no-print"><button id="downloadJsonBtn" class="secondary" type="button">結果データを保存</button><button id="printBtn" class="secondary" type="button">印刷 / PDF保存</button><button id="backBtn" class="ghost" type="button">回答を見直す</button><button id="resultResetBtn" class="ghost" type="button">回答をリセット</button></div>
+  <div class="actions no-print"><button id="downloadJsonBtn" class="secondary" type="button">結果データを保存</button><button id="backBtn" class="ghost" type="button">回答を見直す</button><button id="resultResetBtn" class="ghost" type="button">回答をリセット</button></div>
   <p class="note">コピー・データ保存には28タイプ名、最大の武器・リスク、3項目の個別解説とアドバイス、詳しい結果が含まれます。印刷では詳しい結果も展開します。</p>
 </main><footer class="wrap">リーダーの強みと落とし穴 / Leadership Derailer 70<br />独自設問による振り返りツールです。公式HDSではなく、採用・昇進の判定には使用できません。</footer></section>
 <div id="toast" class="toast hidden" role="status" aria-live="polite"></div>
 <script src="./type-catalog.js?v=2.8.0" defer></script>
 <script src="./profile.js?v=2.8.0" defer></script>
 <script src="./brief.js?v=2.8.0" defer></script>
-<script src="./type-results.js?v=2.8.0" defer></script>
+<script src="./type-results.js?v=2.9.0" defer></script>
 <script src="./app.js?v=2.8.0" defer></script>
 </body></html>
