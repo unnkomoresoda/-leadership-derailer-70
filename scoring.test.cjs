@@ -279,7 +279,7 @@ test('legacy optional data is ignored while saved 70 answers and order still res
  const data=JSON.parse(await app.downloadBlobs[0].text());
  assert.deepEqual(data.profile,{name:'確認例'});
  assert.deepEqual(data.answers,answers);
- assert.equal(data.version,'Leadership Derailer 70 v2.8');
+ assert.equal(data.version,'LEADERSHIP LENS v2.10');
  assert.equal('practice' in data,false);
  assert.equal('mbti' in data.leadershipSummary,false);
  assert.equal(data.brief.action.paragraphs.length,2);
@@ -350,10 +350,11 @@ test('result title is the 28-type name and copy/JSON retain original and new lay
  assert.equal(shareURL.origin,'https://twitter.com');
  assert.equal(shareURL.pathname,'/intent/tweet');
  assert.ok(shareURL.searchParams.get('text').includes(type.jp));
+ assert.ok(shareURL.searchParams.get('text').includes('LEADERSHIP LENS'));
  assert.equal(shareURL.searchParams.get('url'),'https://unnkomoresoda.github.io/-leadership-derailer-70/');
  assert.ok(!shareURL.href.includes('確認例'));
  assert.ok(!shareURL.href.includes('50%2F100'));
- const copy=app.run('buildSummary()');assert.ok(copy.includes('あなたの場合'));assert.ok(copy.includes(type.jp));assert.ok(copy.includes('最大のリスク'));assert.ok(copy.includes('負荷が高いときの、周囲への伝わり方'));
+ const copy=app.run('buildSummary()');assert.ok(copy.startsWith('LEADERSHIP LENS / リーダーシップ・レンズ'));assert.ok(copy.includes('あなたの場合'));assert.ok(copy.includes(type.jp));assert.ok(copy.includes('最大のリスク'));assert.ok(copy.includes('負荷が高いときの、周囲への伝わり方'));
  const payload=JSON.parse(await app.downloadBlobs[0].text());
  assert.equal(payload.combinationType.id,type.id);assert.equal(Object.keys(payload.results.factors).length,11);assert.equal(Object.keys(payload.results.impacts).length,5);assert.equal(payload.leadershipSummary.sections.length,5);assert.equal(Object.keys(payload.answers).length,70);
  assert.equal(app.document.getElementById('personalContexts').children.length,4);

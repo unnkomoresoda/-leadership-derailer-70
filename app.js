@@ -90,7 +90,7 @@ function renderResults(r){const primary=r.typeScores[0],secondary=r.typeScores[1
 function buildSummary(){
   const r=window._latest||calc(),t=r.typeScores[0],second=r.typeScores[1];
   const typeLabel=t.fit-second.fit<4?`${t.jp}・${second.jp}に近い回答`:`${t.jp}が最も近い`;
-  return `リーダーの強みと落とし穴 / Leadership Derailer 70
+  return `LEADERSHIP LENS / リーダーシップ・レンズ
 
 ${combinationResultText(r)}
 
@@ -105,7 +105,7 @@ ${leadershipProfileText(buildLeadershipProfile(r))}
 ※非公式・独自セルフスクリーニング。公式HDSではありません。`;
 }
 async function copySummary(){try{await navigator.clipboard.writeText(buildSummary());toast("結果サマリーをコピーしました")}catch(e){prompt("コピーしてください",buildSummary())}}
-function downloadJSON(){const r=window._latest||calc();const payload={version:"Leadership Derailer 70 v2.8",combinationType:getCombinationType(r.typeScores),personalHighlights:buildPersonalHighlights(r),createdAt:new Date().toISOString(),profile,results:r,brief:buildLeadershipBrief(r),leadershipSummary:buildLeadershipProfile(r),answers,questionOrder:ensureQuestionOrder()};const blob=new Blob([JSON.stringify(payload,null,2)],{type:"application/json"});const a=document.createElement("a"),url=URL.createObjectURL(blob);a.href=url;a.download="leadership-derailer-70-result.json";document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),1000);toast("結果データのダウンロードを開始しました")}
+function downloadJSON(){const r=window._latest||calc();const payload={version:"LEADERSHIP LENS v2.10",combinationType:getCombinationType(r.typeScores),personalHighlights:buildPersonalHighlights(r),createdAt:new Date().toISOString(),profile,results:r,brief:buildLeadershipBrief(r),leadershipSummary:buildLeadershipProfile(r),answers,questionOrder:ensureQuestionOrder()};const blob=new Blob([JSON.stringify(payload,null,2)],{type:"application/json"});const a=document.createElement("a"),url=URL.createObjectURL(blob);a.href=url;a.download="leadership-lens-result.json";document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),1000);toast("結果データのダウンロードを開始しました")}
 function toast(msg){const t=document.getElementById("toast");t.textContent=msg;t.classList.remove("hidden");setTimeout(()=>t.classList.add("hidden"),1800)}function backToQuiz(){document.getElementById("results").classList.add("hidden");document.getElementById("quiz").classList.remove("hidden");renderQuestions();window.scrollTo(0,0)}function resetQuiz(){if(!confirm("70問の回答をすべてリセットしますか？"))return;answers={};questionOrder=null;safeRemove("derailer70Order");safeRemove("derailer70Answers");safeRemove("derailerAnswers");window._latest=null;document.getElementById("incomplete").textContent="";updateSavedNotice();document.getElementById("results").classList.add("hidden");document.getElementById("quiz").classList.add("hidden");document.getElementById("intro").classList.remove("hidden");window.scrollTo(0,0)}function bindUI(){
   const on=(id,event,fn)=>{const el=document.getElementById(id);if(el)el.addEventListener(event,fn)};
   on("startBtn","click",startQuiz);

@@ -52,7 +52,7 @@ function renderTypeLayers(r){
  return {type,highlights};
 }
 function buildXShareURL(type){
- const message=`私のリーダータイプは「${type.jp}」。70問のセルフチェックで、仕事での関わり方を振り返りました。`;
+ const message=`LEADERSHIP LENS｜私のリーダータイプは「${type.jp}」。70問のセルフチェックで、仕事での関わり方を振り返りました。`;
  const site='https://unnkomoresoda.github.io/-leadership-derailer-70/';
  return `https://twitter.com/intent/tweet?text=${encodeURIComponent(message)}&url=${encodeURIComponent(site)}`;
 }

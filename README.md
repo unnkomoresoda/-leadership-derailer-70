@@ -1,4 +1,4 @@
-# リーダーの強みと落とし穴 / Leadership Derailer 70
+# LEADERSHIP LENS / リーダーシップ・レンズ
 
 [診断サイトを開く](https://unnkomoresoda.github.io/-leadership-derailer-70/)
 
