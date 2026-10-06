@@ -98,3 +98,19 @@ Node.js 20以上で `npm test`。ビルドやAPIキーは不要です。GitHub P
 ## Google Sheets連携
 
 設定手順と保存項目は [google-sheets-setup.md](google-sheets-setup.md) に記載しています。Google側の公開URLが未設定の場合、自動送信は行いません。
+
+
+## v2.13：4チームと幾何学的なキャラクター
+
+28タイプを、中心テーマに沿って4チーム（各7タイプ）に整理します。チームは図鑑を探しやすくする編集上の分類です。新しい採点軸ではなく、70問の採点、8プロフィールの順位、28タイプの判定、得点による個人文章を保持します。
+
+| チーム | カラー | 中心テーマ | 7タイプ |
+| --- | --- | --- | --- |
+| 共創チーム / SYNERGY | エメラルド `#58DFC0` | 人の判断力を引き出し、チームの力を広げる。 | empowerment-driver、team-architect、visionary-empowerer、autonomous-strategist、trust-stabilizer、momentum-builder、agile-coach |
+| 推進チーム / DRIVE | アンバー `#FFB071` | 高い目標に向けて、人と仕事の動きを前へ進める。 | excellence-architect、breakthrough-driver、strategic-driver、disciplined-driver、high-impact-leader、intensive-achiever、dynamic-accelerator |
+| 変革チーム / VISION | バイオレット `#BDA0FF` | 前提を問い、新しい可能性や進路をつくる。 | innovation-architect、disruptive-strategist、prudent-innovator、catalyst-leader、agile-innovator、influential-strategist、adaptive-strategist |
+| 設計チーム / STRUCTURE | シアン `#6FCCFF` | 品質・判断の仕組み・安定した運用を整える。 | system-strategist、risk-architect、produce-architect、responsive-optimizer、critical-strategist、confident-stabilizer、resilient-operator |
+
+図鑑は4チームごとのカード一覧とチーム絞り込みを追加し、検索・8基本タイプの絞り込みと組み合わせられます。各チームは `types.html#team-synergy`、`#team-drive`、`#team-vision`、`#team-structure` へ直接アクセスできます。個別タイプへの従来のフラグメントも維持します。結果のチームバッジから該当チームを開けます。
+
+28枚のイラストは、丸い顔・大きな頭・短い手足に、服や道具の幾何学的な面を組み合わせた同一テイストです。チームごとの色に加え、ポーズ・道具をタイプの成功メカニズムに合わせます。画像は900px角のWebP、図鑑では遅延読み込み、版付きURLで更新します。色だけに依存せず、チーム名を併記します。JSONの組み合わせタイプにはチーム情報も含みます。

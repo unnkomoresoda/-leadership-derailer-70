@@ -655,10 +655,87 @@ const LEADERSHIP_TYPE_ROWS=[
  ]]
 ];
 const LEADERSHIP_TYPES=LEADERSHIP_TYPE_ROWS.map(([a,b,id,jp,en,values])=>({a,b,id,jp,en,...Object.fromEntries(LEADERSHIP_TYPE_FIELDS.map((key,n)=>[key,values[n]])),bases:[LEADERSHIP_BASES[a],LEADERSHIP_BASES[b]]}));
+// Four editorial teams organise the library; they are not additional score axes.
+const LEADERSHIP_TEAMS=[
+  {
+    "id": "synergy",
+    "jp": "共創チーム",
+    "en": "SYNERGY",
+    "color": "#58DFC0",
+    "colorName": "エメラルド",
+    "theme": "人の判断力を引き出し、チームの力を広げる。",
+    "typeIds": [
+      "empowerment-driver",
+      "team-architect",
+      "visionary-empowerer",
+      "autonomous-strategist",
+      "trust-stabilizer",
+      "momentum-builder",
+      "agile-coach"
+    ]
+  },
+  {
+    "id": "drive",
+    "jp": "推進チーム",
+    "en": "DRIVE",
+    "color": "#FFB071",
+    "colorName": "アンバー",
+    "theme": "高い目標に向けて、人と仕事の動きを前へ進める。",
+    "typeIds": [
+      "excellence-architect",
+      "breakthrough-driver",
+      "strategic-driver",
+      "disciplined-driver",
+      "high-impact-leader",
+      "intensive-achiever",
+      "dynamic-accelerator"
+    ]
+  },
+  {
+    "id": "vision",
+    "jp": "変革チーム",
+    "en": "VISION",
+    "color": "#BDA0FF",
+    "colorName": "バイオレット",
+    "theme": "前提を問い、新しい可能性や進路をつくる。",
+    "typeIds": [
+      "innovation-architect",
+      "disruptive-strategist",
+      "prudent-innovator",
+      "catalyst-leader",
+      "agile-innovator",
+      "influential-strategist",
+      "adaptive-strategist"
+    ]
+  },
+  {
+    "id": "structure",
+    "jp": "設計チーム",
+    "en": "STRUCTURE",
+    "color": "#6FCCFF",
+    "colorName": "シアン",
+    "theme": "品質・判断の仕組み・安定した運用を整える。",
+    "typeIds": [
+      "system-strategist",
+      "risk-architect",
+      "produce-architect",
+      "responsive-optimizer",
+      "critical-strategist",
+      "confident-stabilizer",
+      "resilient-operator"
+    ]
+  }
+];
+function getLeadershipTeam(type){
+ const id=typeof type==='string'?type:type.id;
+ const team=LEADERSHIP_TEAMS.find(group=>group.typeIds.includes(id));
+ if(!team)throw new Error('タイプのチーム分類を確認できません');
+ return team;
+}
 function getCombinationType(typeScores){
  const primary=LEADERSHIP_BASES.find(x=>x.name===typeScores[0]?.name),secondary=LEADERSHIP_BASES.find(x=>x.name===typeScores[1]?.name);
  if(!primary||!secondary||primary.index===secondary.index)throw new Error('上位2プロフィールを確認できません');
  const [a,b]=[primary.index,secondary.index].sort((x,y)=>x-y);
  const type=LEADERSHIP_TYPES.find(x=>x.a===a&&x.b===b);
- return {...type,primary:{...primary,fit:typeScores[0].fit},secondary:{...secondary,fit:typeScores[1].fit},gap:typeScores[0].fit-typeScores[1].fit};
+ return {...type,team:getLeadershipTeam(type),primary:{...primary,fit:typeScores[0].fit},secondary:{...secondary,fit:typeScores[1].fit},gap:typeScores[0].fit-typeScores[1].fit};
 }

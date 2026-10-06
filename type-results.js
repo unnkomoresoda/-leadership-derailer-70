@@ -36,13 +36,15 @@ function appendScoreEvidence(root,scores){
  const p=document.createElement('p');p.className='brief-evidence';p.textContent=scores.map(x=>`${x.label} ${x.value}/100`).join(' × ');root.appendChild(p);
 }
 function renderTypeLayers(r){
- const type=getCombinationType(r.typeScores),highlights=buildPersonalHighlights(r),report=buildLeadershipProfile(r);
+ const type=getCombinationType(r.typeScores),highlights=buildPersonalHighlights(r),report=buildLeadershipProfile(r),team=type.team;
+ const badge=document.getElementById('leaderTeamBadge');badge.textContent=`${team.jp} · ${team.en}`;badge.href=`./types.html#team-${team.id}`;badge.setAttribute('data-team',team.id);
+ document.getElementById('leaderTypeHero').setAttribute('data-team',team.id);
  document.getElementById('summaryTitle').textContent=type.jp;
  document.getElementById('typeEnglish').textContent=type.en;
  document.getElementById('typeBases').textContent=type.bases.map(x=>x.jp).join(' × ');
  document.getElementById('typeCatch').textContent=type.theme;
  let portrait=document.getElementById('leaderResultImage');if(!portrait){portrait=document.createElement('img');portrait.id='leaderResultImage';portrait.className='leader-result-image';portrait.width=900;portrait.height=900;portrait.decoding='async';document.getElementById('typeCatch').after(portrait);}
- portrait.src=`./leader-${type.id}.webp`;portrait.alt=`${type.jp}の上司像：${type.theme}`;
+ portrait.src=`./leader-${type.id}.webp?v=2.13.0`;portrait.alt=`${team.jp}の${type.jp}を表すキャラクター：${type.theme}`;
  const link=document.getElementById('typeDetailLink');link.href=`./types.html#${type.id}`;link.textContent=`${type.jp}を詳しく見る →`;
  document.getElementById('xShareLink').href=buildXShareURL(type);
  const boundary=r.typeScores[1].fit-r.typeScores[2].fit;
@@ -60,7 +62,7 @@ function buildXShareURL(type){
 }
 function combinationResultText(r){
  const type=getCombinationType(r.typeScores),p=buildPersonalHighlights(r),text=x=>`${x.title}\n${x.body}\n${x.scores.map(s=>`${s.label} ${s.value}/100`).join(' × ')}`;
- return `あなたのリーダータイプ：${type.jp}\n${type.en}\n${type.bases.map(x=>x.jp).join(' × ')}\n${type.theme}\nPrimary：${type.primary.jp} ${type.primary.fit}/100\nSecondary：${type.secondary.jp} ${type.secondary.fit}/100\n類似度は所属確率ではありません。タイプは理解のための骨格で、個人分析は70問の得点で変わります。\n図鑑：https://unnkomoresoda.github.io/-leadership-derailer-70/types.html#${type.id}\n\nあなたの場合\n最大の武器\n${text(p.weapon)}\n\n最大のリスク\n${text(p.risk)}\n${p.method}`;
+ return `あなたのリーダータイプ：${type.jp}\n${type.team.jp} / ${type.team.en}\n${type.en}\n${type.bases.map(x=>x.jp).join(' × ')}\n${type.theme}\nPrimary：${type.primary.jp} ${type.primary.fit}/100\nSecondary：${type.secondary.jp} ${type.secondary.fit}/100\n類似度は所属確率ではありません。タイプは理解のための骨格で、個人分析は70問の得点で変わります。\n図鑑：https://unnkomoresoda.github.io/-leadership-derailer-70/types.html#${type.id}\n\nあなたの場合\n最大の武器\n${text(p.weapon)}\n\n最大のリスク\n${text(p.risk)}\n${p.method}`;
 }
 function printResults(){
  const closed=[...document.querySelectorAll('#results details')].filter(x=>!x.open);
