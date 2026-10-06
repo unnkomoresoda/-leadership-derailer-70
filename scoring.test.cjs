@@ -36,6 +36,8 @@ function load(initialStorage = {}, blockedStorage = false) {
   vm.runInContext(fs.readFileSync(path.join(__dirname, 'type-results.js'), 'utf8'), context);
   vm.runInContext(fs.readFileSync(path.join(__dirname, 'profile.js'), 'utf8'), context);
   vm.runInContext(fs.readFileSync(path.join(__dirname, 'brief.js'), 'utf8'), context);
+  vm.runInContext(fs.readFileSync(path.join(__dirname, 'sheets-config.js'), 'utf8'), context);
+  vm.runInContext(fs.readFileSync(path.join(__dirname, 'sheets-sync.js'), 'utf8'), context);
   vm.runInContext(fs.readFileSync(path.join(__dirname, 'app.js'), 'utf8'), context);
   return { run: script => vm.runInContext(script, context), storage, document, downloadBlobs };
 }
@@ -364,3 +366,11 @@ test('printing opens details for the output then restores the previous state',()
  const app=load();
  assert.equal(app.run(`(()=>{const a={open:false},b={open:true};document.querySelectorAll=()=>[a,b];let restore;window.addEventListener=(event,fn)=>{restore=fn};window.print=()=>{};printResults();const opened=a.open&&b.open;restore();return opened&&!a.open&&b.open})()`),true);
 });
+
+// Results sent to Sheets contain the requested display name, never raw answers.
+test('sheet payload preserves scores and includes display name only',()=>{
+ const app=load();fill(app,3);app.run('profile.name="テスト担当"');
+ const p=JSON.parse(JSON.stringify(app.run('buildSheetResult(calc())')));
+ assert.equal(p.displayName,'テスト担当');assert.equal(Object.keys(p.factors).length,11);assert.equal(Object.keys(p.impacts).length,5);assert.equal(p.multiplier,50);assert.equal('answers' in p,false);assert.equal('profile' in p,false);
+});
+test('disabled sheet connection does not block diagnosis',()=>{const app=load();fill(app,3);assert.doesNotThrow(()=>app.run('showResults()'));assert.equal(app.run('window._latest.multiplier'),50);});

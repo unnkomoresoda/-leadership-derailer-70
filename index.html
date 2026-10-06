@@ -33,9 +33,10 @@
     <p>あなたの行動から「持ち味」「空回りしやすい場面」「持ち味を活かすアドバイス」を整理します。はじめて部下を持つ方、任せ方や育て方を見直したい方の振り返りに。</p>
     <p class="note">理想の自分ではなく、最近の仕事で実際に取った行動を思い浮かべてください。迷った場合は、より近い回答を選んでください。</p>
     <label class="field name-field">表示名（任意）<input id="nameInput" type="text" maxlength="80" autocomplete="off" placeholder="例：K.M." /></label>
+    <p id="sheetCollectionNotice" class="note">表示名と診断結果は運営者のGoogleスプレッドシートに保存されます。</p>
     <p id="savedNotice" class="note" aria-live="polite"></p>
     <div class="actions"><button id="startBtn" class="primary" type="button">70問を始める</button><button id="resumeResultBtn" class="secondary hidden" type="button">保存した結果を見る</button></div>
-    <p class="note privacy-note">回答・表示名・診断結果は、このブラウザ内で扱い、アクセス解析には送信しません。訪問数などの利用状況の計測にGoogle Analyticsを使用しています。</p>
+    <p class="note privacy-note">表示名・診断結果はアクセス解析には送信しません。訪問数などの利用状況の計測にGoogle Analyticsを使用しています。</p>
   </section>
   <details class="disclosure intro-method"><summary>このセルフチェックについて</summary><div class="disclosure-body">
     <p class="note">仕事での行動を振り返るための、独自設問によるセルフチェックです。能力や人柄の優劣を判定するものではありません。</p>
@@ -86,6 +87,8 @@
 
   </div>
   <div class="actions no-print"><button id="downloadJsonBtn" class="secondary" type="button">結果データを保存</button><button id="backBtn" class="ghost" type="button">回答を見直す</button><button id="resultResetBtn" class="ghost" type="button">回答をリセット</button></div>
+  <p id="sheetSaveStatus" class="note no-print" role="status" aria-live="polite"></p>
+  <button id="sheetRetryBtn" class="secondary hidden no-print" type="button">自動保存を再試行</button>
   <p class="note">コピー・データ保存には28タイプ名、最大の武器・リスク、3項目の個別解説とアドバイス、詳しい結果が含まれます。印刷では詳しい結果も展開します。</p>
 </main><footer class="wrap">LEADERSHIP LENS / リーダーシップ・レンズ<br />独自設問による振り返りツールです。公式HDSではなく、採用・昇進の判定には使用できません。</footer></section>
 <div id="toast" class="toast hidden" role="status" aria-live="polite"></div>
@@ -93,5 +96,7 @@
 <script src="./profile.js?v=2.8.0" defer></script>
 <script src="./brief.js?v=2.8.0" defer></script>
 <script src="./type-results.js?v=2.10.0" defer></script>
-<script src="./app.js?v=2.10.0" defer></script>
+<script src="./sheets-config.js?v=2.11.0" defer></script>
+<script src="./sheets-sync.js?v=2.11.0" defer></script>
+<script src="./app.js?v=2.11.0" defer></script>
 </body></html>
