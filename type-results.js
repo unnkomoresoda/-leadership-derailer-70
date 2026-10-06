@@ -55,9 +55,13 @@ function renderTypeLayers(r){
  [['あなたの最大の武器',highlights.weapon],['あなたの最大のリスク',highlights.risk]].forEach(([label,part])=>{const card=document.createElement('section');card.className='card highlight-card';const k=document.createElement('div');k.className='kicker';k.textContent=label;card.appendChild(k);const h=document.createElement('h3');h.textContent=part.title;card.appendChild(h);const p=document.createElement('p');p.textContent=part.body;card.appendChild(p);appendScoreEvidence(card,part.scores);root.appendChild(card)});
  return {type,highlights};
 }
+function buildTypeSharePageURL(type){
+ const site='https://unnkomoresoda.github.io/-leadership-derailer-70/';
+ return type&&LEADERSHIP_TYPES.some(entry=>entry.id===type.id)?`${site}share/${type.id}.html`:site;
+}
 function buildXShareURL(type){
  const message=`LEADERSHIP LENS｜私のリーダータイプは「${type.jp}」。70問のセルフチェックで、仕事での関わり方を振り返りました。`;
- const site='https://unnkomoresoda.github.io/-leadership-derailer-70/';
+ const site=buildTypeSharePageURL(type);
  return `https://twitter.com/intent/tweet?text=${encodeURIComponent(message)}&url=${encodeURIComponent(site)}`;
 }
 function combinationResultText(r){
@@ -71,4 +75,3 @@ function printResults(){
  window.addEventListener('afterprint',restore,{once:true});
  try{window.print()}catch(error){restore();throw error}
 }
-

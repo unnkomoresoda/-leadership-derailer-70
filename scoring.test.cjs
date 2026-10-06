@@ -353,7 +353,7 @@ test('result title is the 28-type name and copy/JSON retain original and new lay
  assert.equal(shareURL.pathname,'/intent/tweet');
  assert.ok(shareURL.searchParams.get('text').includes(type.jp));
  assert.ok(shareURL.searchParams.get('text').includes('LEADERSHIP LENS'));
- assert.equal(shareURL.searchParams.get('url'),'https://unnkomoresoda.github.io/-leadership-derailer-70/');
+ assert.equal(shareURL.searchParams.get('url'),`https://unnkomoresoda.github.io/-leadership-derailer-70/share/${type.id}.html`);
  assert.ok(!shareURL.href.includes('確認例'));
  assert.ok(!shareURL.href.includes('50%2F100'));
  const copy=app.run('buildSummary()');assert.ok(copy.startsWith('LEADERSHIP LENS / リーダーシップ・レンズ'));assert.ok(copy.includes('あなたの場合'));assert.ok(copy.includes(type.jp));assert.ok(copy.includes('最大のリスク'));assert.ok(copy.includes('負荷が高いときの、周囲への伝わり方'));
