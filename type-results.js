@@ -41,6 +41,8 @@ function renderTypeLayers(r){
  document.getElementById('typeEnglish').textContent=type.en;
  document.getElementById('typeBases').textContent=type.bases.map(x=>x.jp).join(' × ');
  document.getElementById('typeCatch').textContent=type.theme;
+ let portrait=document.getElementById('leaderResultImage');if(!portrait){portrait=document.createElement('img');portrait.id='leaderResultImage';portrait.className='leader-result-image';portrait.width=900;portrait.height=900;portrait.decoding='async';document.getElementById('typeCatch').after(portrait);}
+ portrait.src=`./leader-${type.id}.webp`;portrait.alt=`${type.jp}の上司像：${type.theme}`;
  const link=document.getElementById('typeDetailLink');link.href=`./types.html#${type.id}`;link.textContent=`${type.jp}を詳しく見る →`;
  document.getElementById('xShareLink').href=buildXShareURL(type);
  const boundary=r.typeScores[1].fit-r.typeScores[2].fit;
@@ -67,3 +69,4 @@ function printResults(){
  window.addEventListener('afterprint',restore,{once:true});
  try{window.print()}catch(error){restore();throw error}
 }
+
